@@ -12,13 +12,12 @@ struct WelcomeView: View {
         VStack(alignment: .leading, spacing: 0) {
             Eyebrow("ATLAS")
 
-            Spacer(minLength: Space.block)
-
-            // The river appears once here, small and unlabelled, as a promise.
-            Current(stageTitles: Journey.stageTitles, currentStage: 0)
-                .frame(height: 44)
-                .accessibilityHidden(true)
-                .padding(.bottom, Space.block)
+            // The river appears once here as a promise — the raft waiting at the
+            // first checkpoint under drifting clouds, filling the space to the
+            // headline.
+            WelcomeRiverHero()
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
+                .padding(.bottom, Space.l)
 
             Text("Your career,\nwithout\nthe chaos.")
                 .atlasText(.displayLarge)

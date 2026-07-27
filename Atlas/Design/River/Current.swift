@@ -2,44 +2,31 @@ import SwiftUI
 import UIKit
 
 /// The persistent progress river at the top of every onboarding screen — a
-/// gentle sine curve with a glowing travelled portion, a breathing current
-/// node, and a slow phase drift. Replaces the idea of a progress bar entirely.
+/// gentle sine curve with a glowing travelled portion, checkpoint nodes, and
+/// the raft (a boat) riding at the current stage. The boat glides to the next
+/// checkpoint as a stage completes; a slow phase drift keeps the water alive.
 struct Current: View {
-    /// One title per stage, e.g. ["welcome", "career path", "upload CV"].
+    /// One title per stage, e.g. ["career path", "upload CV", "confirm profile"].
     let stageTitles: [String]
-    /// 0-based index of the current (breathing) stage.
+    /// 0-based index of the current stage (where the boat sits).
     let currentStage: Int
 
     @State private var animatedProgress: CGFloat = 0
 
     private let amplitude: CGFloat = 6
     private let wavelengths: CGFloat = 1.4
-    private let inset: CGFloat = 12
+    private let inset: CGFloat = 14
+    private let boatScale: CGFloat = 5.5
 
     private var count: Int { stageTitles.count }
     private func fraction(_ i: Int) -> CGFloat {
         count <= 1 ? 0 : CGFloat(i) / CGFloat(count - 1)
     }
 
-    /// On appear, animate the flow completing into the current node (extending
-    /// from the previous one) with a success haptic — the signature beat. Stage
-    /// 0 (the Welcome promise, career path) just sits at its position.
-    private func flowIntoCurrentStage() {
-        let target = fraction(currentStage)
-        guard currentStage > 0 else { animatedProgress = target; return }
-        if Motion.reduceMotion {
-            animatedProgress = target
-        } else {
-            animatedProgress = fraction(currentStage - 1)
-            withAnimation(Motion.standard(Motion.river)) { animatedProgress = target }
-        }
-        UINotificationFeedbackGenerator().notificationOccurred(.success)
-    }
-
     var body: some View {
         canvas
             .frame(maxWidth: .infinity)
-            .frame(height: 44)
+            .frame(height: 56)
             .onAppear { flowIntoCurrentStage() }
             .onChange(of: currentStage) { old, new in
                 let anim = Motion.reduceMotion
@@ -58,20 +45,34 @@ struct Current: View {
             }
     }
 
+    /// On appear, glide the raft into the current node (extending from the
+    /// previous one) with a success haptic — the signature beat.
+    private func flowIntoCurrentStage() {
+        let target = fraction(currentStage)
+        guard currentStage > 0 else { animatedProgress = target; return }
+        if Motion.reduceMotion {
+            animatedProgress = target
+        } else {
+            animatedProgress = fraction(currentStage - 1)
+            withAnimation(Motion.standard(Motion.river)) { animatedProgress = target }
+        }
+        UINotificationFeedbackGenerator().notificationOccurred(.success)
+    }
+
     @ViewBuilder private var canvas: some View {
         if Motion.reduceMotion {
-            Canvas { ctx, size in draw(&ctx, size, phase: 0, breath: 1) }
+            Canvas { ctx, size in draw(&ctx, size, phase: 0, bob: 0) }
         } else {
             TimelineView(.animation) { timeline in
                 let t = timeline.date.timeIntervalSinceReferenceDate
                 let phase = 2 * .pi * (t.truncatingRemainder(dividingBy: 12) / 12)
-                let breath = 1.03 + 0.03 * sin(2 * .pi * t / 3.2)
-                Canvas { ctx, size in draw(&ctx, size, phase: phase, breath: breath) }
+                let bob = 1.4 * sin(2 * .pi * t / 2.6)
+                Canvas { ctx, size in draw(&ctx, size, phase: phase, bob: bob) }
             }
         }
     }
 
-    private func draw(_ ctx: inout GraphicsContext, _ size: CGSize, phase: CGFloat, breath: CGFloat) {
+    private func draw(_ ctx: inout GraphicsContext, _ size: CGSize, phase: CGFloat, bob: CGFloat) {
         let w = size.width - inset * 2
         guard w > 0 else { return }
         let midY = size.height / 2
@@ -95,20 +96,27 @@ struct Current: View {
                        style: StrokeStyle(lineWidth: 3, lineCap: .round))
         }
 
-        // Nodes.
-        for i in 0..<count {
-            let x = inset + w * fraction(i)
-            let y = RiverShapes.y(atX: x - inset, width: w, midY: midY,
-                                  amplitude: amplitude, wavelengths: wavelengths, phase: phase)
-            let p = CGPoint(x: x, y: y)
-            if i < currentStage {
-                drawCompleted(&ctx, at: p)
-            } else if i == currentStage {
-                drawCurrent(&ctx, at: p, breath: breath)
-            } else {
-                drawAhead(&ctx, at: p)
-            }
+        // Checkpoint nodes (completed = filled + check, ahead = ring).
+        for i in 0..<count where i != currentStage {
+            let p = nodePoint(i, w: w, midY: midY, phase: phase)
+            if i < currentStage { drawCompleted(&ctx, at: p) } else { drawAhead(&ctx, at: p) }
         }
+
+        // The raft rides at the animated progress position (between nodes while
+        // it's gliding, exactly on the current node once it settles).
+        let boatX = inset + w * animatedProgress
+        let boatY = RiverShapes.y(atX: boatX - inset, width: w, midY: midY,
+                                  amplitude: amplitude, wavelengths: wavelengths, phase: phase)
+        let tilt = RiverArt.tilt(atX: boatX - inset, width: w, amplitude: amplitude,
+                                 wavelengths: wavelengths, phase: phase)
+        RiverArt.drawBoat(in: &ctx, at: CGPoint(x: boatX, y: boatY - bob), scale: boatScale, tilt: tilt)
+    }
+
+    private func nodePoint(_ i: Int, w: CGFloat, midY: CGFloat, phase: CGFloat) -> CGPoint {
+        let x = inset + w * fraction(i)
+        let y = RiverShapes.y(atX: x - inset, width: w, midY: midY,
+                              amplitude: amplitude, wavelengths: wavelengths, phase: phase)
+        return CGPoint(x: x, y: y)
     }
 
     private func disc(_ p: CGPoint, _ r: CGFloat) -> Path {
@@ -124,13 +132,6 @@ struct Current: View {
         check.addLine(to: CGPoint(x: p.x + 2.0, y: p.y - 1.6))
         ctx.stroke(check, with: .color(.white),
                    style: StrokeStyle(lineWidth: 1.3, lineCap: .round, lineJoin: .round))
-    }
-
-    private func drawCurrent(_ ctx: inout GraphicsContext, at p: CGPoint, breath: CGFloat) {
-        let outer = 4.5 * breath
-        ctx.fill(disc(p, outer + 1.5), with: .color(Palette.paper))
-        ctx.stroke(disc(p, outer), with: .color(Palette.blue), lineWidth: 3)
-        ctx.fill(disc(p, 1.75 * breath), with: .color(Palette.blue))
     }
 
     private func drawAhead(_ ctx: inout GraphicsContext, at p: CGPoint) {
