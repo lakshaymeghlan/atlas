@@ -14,7 +14,7 @@ struct AtlasButton<Leading: View>: View {
 
     var body: some View {
         Button(action: action) {
-            HStack(spacing: Space.s) {
+            HStack(spacing: 10) {
                 leading
                 Text(title)
                     .font(.system(size: 17, weight: .semibold))

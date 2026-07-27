@@ -1,8 +1,8 @@
 import SwiftUI
 
-/// Boat + cloud drawing, shared by `Current` (the progress river) and
-/// `WelcomeRiverHero`. The boat is the raft — it rides the current to each
-/// checkpoint; the clouds give the water a sky to sit under.
+/// Boat drawing for the onboarding progress river (`Current`). The boat is the
+/// raft — it rides the current to each checkpoint. (S01 draws its own boat in
+/// `WelcomeRiver`.)
 enum RiverArt {
     /// Draw a little sailboat centred on `point` (its deck sits on the waterline,
     /// the hull dips below). Unit geometry scaled by `scale`; `tilt` rotates it
@@ -41,30 +41,6 @@ enum RiverArt {
             hullPath.addQuadCurve(to: CGPoint(x: -1.05 * scale, y: -0.05 * scale),
                                   control: CGPoint(x: 0, y: 1.25 * scale))
             layer.fill(hullPath, with: .color(hull))
-        }
-    }
-
-    /// Draw a soft cloud (a cluster of blurred blobs) centred on `point`.
-    static func drawCloud(
-        in ctx: inout GraphicsContext,
-        at point: CGPoint,
-        scale: CGFloat,
-        color: Color,
-        blur: CGFloat = 4
-    ) {
-        let blobs: [(CGFloat, CGFloat, CGFloat)] = [
-            (-1.15, 0.18, 0.55), (-0.35, -0.16, 0.82), (0.5, -0.06, 0.66),
-            (1.2, 0.22, 0.5), (0.1, 0.28, 0.78),
-        ]
-        ctx.drawLayer { layer in
-            if blur > 0 { layer.addFilter(.blur(radius: blur)) }
-            for (dx, dy, r) in blobs {
-                let radius = r * scale
-                let rect = CGRect(x: point.x + dx * scale - radius,
-                                  y: point.y + dy * scale - radius,
-                                  width: radius * 2, height: radius * 2)
-                layer.fill(Path(ellipseIn: rect), with: .color(color))
-            }
         }
     }
 

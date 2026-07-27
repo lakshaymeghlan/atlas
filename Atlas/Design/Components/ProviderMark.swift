@@ -1,7 +1,7 @@
 import SwiftUI
 
-/// 20pt monochrome provider marks for the sign-in buttons. Neither provider
-/// gets a coloured button — the mark is ink on the card fill.
+/// Bare 20pt monochrome provider marks for the sign-in buttons — ink, no
+/// container. Neither provider gets a coloured box.
 ///
 /// ponytail: monogram stand-ins, not the licensed brand glyphs. Drop real
 /// LinkedIn/GitHub SVG assets in before public release.
@@ -12,29 +12,25 @@ struct ProviderMark: View {
     init(_ provider: Provider) { self.provider = provider }
 
     var body: some View {
-        RoundedRectangle(cornerRadius: 4, style: .continuous)
-            .fill(Palette.ink)
+        glyph
+            .foregroundStyle(Palette.ink)
             .frame(width: 20, height: 20)
-            .overlay(glyph)
             .accessibilityHidden(true)
     }
 
     @ViewBuilder private var glyph: some View {
         switch provider {
         case .linkedIn:
-            Text("in")
-                .font(.system(size: 11, weight: .heavy))
-                .foregroundStyle(.white)
+            Text("in").font(.system(size: 17, weight: .heavy))
         case .github:
             Image(systemName: "chevron.left.forwardslash.chevron.right")
-                .font(.system(size: 10, weight: .bold))
-                .foregroundStyle(.white)
+                .font(.system(size: 16, weight: .semibold))
         }
     }
 }
 
 #Preview {
-    HStack(spacing: Space.m) {
+    HStack(spacing: Space.l) {
         ProviderMark(.linkedIn)
         ProviderMark(.github)
     }

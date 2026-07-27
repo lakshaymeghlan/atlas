@@ -1,7 +1,8 @@
 import SwiftUI
 
-/// S01 · Welcome. No form, no splash — the app is simply already there. Content
-/// fades up on cold start. Sign-in is stubbed (see AuthStore).
+/// S01 · Welcome. No form, no splash — the app is simply already there. The
+/// river band bleeds edge to edge; everything else keeps the 20pt margin.
+/// Content fades up on cold start. Sign-in is stubbed (see AuthStore).
 struct WelcomeView: View {
     var onSignedIn: () -> Void
 
@@ -11,26 +12,29 @@ struct WelcomeView: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
             Eyebrow("ATLAS")
+                .padding(.horizontal, Space.screen)
+                .padding(.top, Space.screen)
 
-            // The river appears once here as a promise — the raft waiting at the
-            // first checkpoint under drifting clouds, filling the space to the
-            // headline.
-            WelcomeRiverHero()
-                .frame(maxWidth: .infinity, maxHeight: .infinity)
-                .padding(.bottom, Space.l)
+            // The river previews the journey — full-bleed, no side margin.
+            WelcomeRiver()
+                .padding(.top, 28)
 
-            Text("Your career,\nwithout\nthe chaos.")
-                .atlasText(.displayLarge)
-                .foregroundStyle(Palette.ink)
-                .fixedSize(horizontal: false, vertical: true)
+            Spacer(minLength: 40)
 
-            Text("Atlas learns your story and connects you to work that actually fits.")
-                .atlasText(.body)
-                .foregroundStyle(Palette.inkSecondary)
-                .lineLimit(3)
-                .padding(.top, Space.l)
+            VStack(alignment: .leading, spacing: 0) {
+                Text("Your career,\nwithout\nthe chaos.")
+                    .atlasText(.displayLarge)
+                    .foregroundStyle(Palette.ink)
+                    .fixedSize(horizontal: false, vertical: true)
+                Text("Atlas learns your story and connects you to work that actually fits.")
+                    .atlasText(.body)
+                    .foregroundStyle(Palette.inkSecondary)
+                    .lineLimit(2)
+                    .padding(.top, Space.l)
+            }
+            .padding(.horizontal, Space.screen)
 
-            Spacer().frame(height: 40)
+            Spacer(minLength: 32)
 
             VStack(spacing: Space.m) {
                 AtlasButton(title: "Continue with LinkedIn", kind: .secondary,
@@ -43,15 +47,18 @@ struct WelcomeView: View {
                             leading: { ProviderMark(.github) }) {
                     signIn(.github)
                 }
-                Text("We only read what you approve.")
-                    .atlasText(.caption)
-                    .foregroundStyle(Palette.inkTertiary)
-                    .frame(maxWidth: .infinity)
-                    .padding(.top, Space.xs)
             }
+            .padding(.horizontal, Space.screen)
+
+            Text("We only read what you approve.")
+                .atlasText(.caption)
+                .foregroundStyle(Palette.inkTertiary)
+                .frame(maxWidth: .infinity)
+                .padding(.top, Space.l)
+                .padding(.horizontal, Space.screen)
         }
-        .padding(Space.screen)
-        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .leading)
+        .padding(.bottom, Space.screen)
+        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
         .background(Palette.paper)
         .opacity(appeared ? 1 : 0)
         .offset(y: appeared || Motion.reduceMotion ? 0 : 8)

@@ -166,6 +166,28 @@ enum Motion {
         .timingCurve(enterCurve.0, enterCurve.1, enterCurve.2, enterCurve.3, duration: duration)
     }
 
+    /// Numeric evaluation of the standard curve (for manually-driven Canvas
+    /// animation, where `Animation` values can't be used). x, result in 0…1.
+    static func standardEase(_ x: Double) -> Double {
+        cubicBezier(max(0, min(1, x)), standardCurve.0, standardCurve.1, standardCurve.2, standardCurve.3)
+    }
+
+    /// y at position x on a cubic-bezier easing curve through (0,0),(p1),(p2),(1,1).
+    private static func cubicBezier(_ x: Double, _ p1x: Double, _ p1y: Double, _ p2x: Double, _ p2y: Double) -> Double {
+        func curveX(_ t: Double) -> Double { let c = 3 * p1x, b = 3 * (p2x - p1x) - 3 * p1x, a = 1 - 3 * p2x + 3 * p1x; return ((a * t + b) * t + c) * t }
+        func curveY(_ t: Double) -> Double { let c = 3 * p1y, b = 3 * (p2y - p1y) - 3 * p1y, a = 1 - 3 * p2y + 3 * p1y; return ((a * t + b) * t + c) * t }
+        func derivX(_ t: Double) -> Double { let c = 3 * p1x, b = 3 * (p2x - p1x) - 3 * p1x, a = 1 - 3 * p2x + 3 * p1x; return (3 * a * t + 2 * b) * t + c }
+        var t = x
+        for _ in 0..<8 {
+            let err = curveX(t) - x
+            if Swift.abs(err) < 1e-5 { break }
+            let d = derivX(t)
+            if Swift.abs(d) < 1e-6 { break }
+            t -= err / d
+        }
+        return curveY(t)
+    }
+
     /// Screen-to-screen transition: 24pt horizontal push + fade downstream.
     /// Collapses to a 160ms fade under Reduce Motion.
     static var screenTransition: AnyTransition {
