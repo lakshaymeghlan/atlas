@@ -55,6 +55,7 @@ struct RiverCanvas: View {
             let t = timeline.date.timeIntervalSinceReferenceDate
             let canvas = Canvas { ctx, size in
                 drawWaves(&ctx, size, t: t)
+                drawSurfaceSheen(&ctx, size, t: t)
                 drawParticles(&ctx, size, t: t)
             }
             .ignoresSafeArea()
@@ -101,6 +102,37 @@ struct RiverCanvas: View {
             )
             ctx.fill(RiverShapes.fillPath(pts, size: size),
                      with: .color(Palette.blue.opacity(wave.opacity)))
+        }
+    }
+
+    /// A specular glass rim on the frontmost wave, plus soft light glints
+    /// drifting along it — the same glass language as the Welcome river.
+    private func drawSurfaceSheen(_ ctx: inout GraphicsContext, _ size: CGSize, t: Double) {
+        let wave = waves[2]
+        let phase = 2 * .pi * (t.truncatingRemainder(dividingBy: wave.period) / wave.period)
+        let midY = size.height * wave.midFraction
+        let pts = RiverShapes.points(width: size.width, midY: midY, amplitude: wave.amplitude,
+                                     wavelengths: wave.cycles, phase: phase)
+        let path = RiverShapes.smoothPath(pts)
+        ctx.stroke(path, with: .color(Palette.blue.opacity(0.28)),
+                   style: StrokeStyle(lineWidth: 1.5, lineCap: .round))
+        ctx.stroke(path.applying(.init(translationX: 0, y: -1)),
+                   with: .color(.white.opacity(0.4)), style: StrokeStyle(lineWidth: 1, lineCap: .round))
+
+        let glints: [(speed: Double, phase: Double, maxOpacity: Double)] = [
+            (30, 0.0, 0.5), (46, 0.35, 0.4), (22, 0.7, 0.35),
+        ]
+        ctx.drawLayer { layer in
+            layer.blendMode = .plusLighter
+            layer.addFilter(.blur(radius: 4))
+            for g in glints {
+                let x = (t * g.speed + g.phase * Double(size.width)).truncatingRemainder(dividingBy: Double(size.width))
+                let y = RiverShapes.y(atX: CGFloat(x), width: size.width, midY: midY,
+                                      amplitude: wave.amplitude, wavelengths: wave.cycles, phase: phase)
+                let twinkle = 0.5 + 0.5 * sin(t * 1.3 + g.phase * 6.28)
+                let rect = CGRect(x: CGFloat(x) - 16, y: y - 3, width: 32, height: 6)
+                layer.fill(Path(ellipseIn: rect), with: .color(.white.opacity(g.maxOpacity * twinkle)))
+            }
         }
     }
 

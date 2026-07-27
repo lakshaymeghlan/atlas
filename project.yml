@@ -25,6 +25,11 @@ targets:
     platform: iOS
     sources:
       - path: Atlas
+        # River.metal needs the on-demand Metal Toolchain to compile. It's an
+        # optional ripple (Config.useShaders); excluded so the prototype builds
+        # without that component. Re-include + flip useShaders on to enable it.
+        excludes:
+          - "**/*.metal"
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: ai.sofsuite.atlas

@@ -1,9 +1,10 @@
 import SwiftUI
 
-/// S01 hero. A full-bleed band of water previewing the whole Atlas journey —
-/// FIND · JOIN · BELONG — with a boat waiting at the start. Nothing is complete
-/// and nothing is in progress; it's a promise. One slow light travels the river
-/// and rests, so it reads as a journey without claiming the user is on one.
+/// S01 hero. A full-bleed band of *glass water* previewing the whole Atlas
+/// journey — FIND · JOIN · BELONG — with a boat waiting at the start. The water
+/// is a translucent glass ribbon with a specular rim; light glints drift across
+/// it and one slow travel light runs the length and rests. Nothing is complete
+/// and nothing is in progress: it's a promise, not a status.
 struct WelcomeRiver: View {
     /// When set, renders a single frozen frame at this time (for previews).
     var frozenTime: Double? = nil
@@ -46,75 +47,111 @@ struct WelcomeRiver: View {
 
     private func draw(_ ctx: inout GraphicsContext, _ size: CGSize, time: Double, animate: Bool) {
         guard size.width > 1 else { return }
-        let W = size.width, H = size.height
-        cache.refresh(config: config, width: W, height: H)
-        let path = cache.path
+        cache.refresh(config: config, width: size.width, height: size.height)
 
-        drawReflection(&ctx, path: path, size: size)
-        drawGlow(&ctx, path: path)
-        drawBed(&ctx, path: path)
+        drawGlassBody(&ctx, size: size)
+        drawSurface(&ctx)
+        if animate { drawGlints(&ctx, time: time) }
 
         // Travel light + resulting node pulses.
-        var lightCenter: CGFloat = 2 // off-river by default (no pulse under Reduce Motion)
+        var lightCenter: CGFloat = 2 // off-river by default (no pulse at rest)
         if animate {
             let (from, to, center) = travelWindow(time)
             lightCenter = center
-            let a = max(0, min(1, from)), b = max(0, min(1, to))
-            if b > a {
-                let seg = path.trimmedPath(from: a, to: b)
-                ctx.drawLayer { layer in
-                    layer.addFilter(.blur(radius: 5))
-                    layer.stroke(seg, with: .color(Palette.blue.opacity(0.25)),
-                                 style: StrokeStyle(lineWidth: 8, lineCap: .round))
-                }
-                ctx.stroke(seg, with: .color(Palette.blue),
-                           style: StrokeStyle(lineWidth: 3, lineCap: .round))
-            }
+            drawTravelLight(&ctx, from: from, to: to)
         }
 
         drawNodesAndLabels(&ctx, size: size, lightCenter: lightCenter)
         drawBoat(&ctx, time: time, animate: animate)
     }
 
-    // MARK: Layers
+    // MARK: Glass water
 
-    private func drawReflection(_ ctx: inout GraphicsContext, path: Path, size: CGSize) {
-        let baseline = path.boundingRect.maxY
-        let mirror = CGAffineTransform(a: 1, b: 0, c: 0, d: -1, tx: 0, ty: 2 * baseline + 10)
-        let reflection = path.applying(mirror)
-        ctx.stroke(
-            reflection,
+    private func drawGlassBody(_ ctx: inout GraphicsContext, size: CGSize) {
+        // Soft glow beneath the glass gives it depth against the paper.
+        ctx.drawLayer { layer in
+            layer.addFilter(.blur(radius: 10))
+            layer.stroke(cache.path, with: .color(Palette.blue.opacity(0.10)), lineWidth: 16)
+        }
+        // The glass body: a translucent ribbon, lit at the top, deepening down.
+        ctx.fill(
+            cache.ribbon,
             with: .linearGradient(
-                Gradient(colors: [Palette.blue.opacity(0.07), .clear]),
-                startPoint: CGPoint(x: size.width / 2, y: baseline),
-                endPoint: CGPoint(x: size.width / 2, y: baseline + 44)
-            ),
-            lineWidth: 2
+                Gradient(stops: [
+                    .init(color: .white.opacity(0.34), location: 0.0),
+                    .init(color: Palette.blue.opacity(0.24), location: 0.30),
+                    .init(color: Palette.blue.opacity(0.06), location: 1.0),
+                ]),
+                startPoint: CGPoint(x: size.width / 2, y: cache.topY),
+                endPoint: CGPoint(x: size.width / 2, y: cache.bottomY)
+            )
         )
     }
 
-    private func drawGlow(_ ctx: inout GraphicsContext, path: Path) {
+    private func drawSurface(_ ctx: inout GraphicsContext) {
+        // Waterline, then a brighter specular edge riding just above it.
+        ctx.stroke(cache.path, with: .color(Palette.blue.opacity(0.45)),
+                   style: StrokeStyle(lineWidth: 2, lineCap: .round))
+        ctx.stroke(cache.path.applying(.init(translationX: 0, y: -0.9)),
+                   with: .color(.white.opacity(0.55)),
+                   style: StrokeStyle(lineWidth: 1, lineCap: .round))
+    }
+
+    private func drawGlints(_ ctx: inout GraphicsContext, time: Double) {
+        // Soft highlights drifting along the surface — light catching glass.
+        let glints: [(speed: Double, phase: Double, maxOpacity: Double)] = [
+            (0.045, 0.00, 0.55), (0.028, 0.40, 0.42), (0.065, 0.72, 0.36),
+        ]
         ctx.drawLayer { layer in
-            layer.addFilter(.blur(radius: 8))
-            layer.stroke(path, with: .color(Palette.blue.opacity(0.09)), lineWidth: 12)
+            layer.blendMode = .plusLighter
+            layer.addFilter(.blur(radius: 3))
+            for g in glints {
+                let tg = (time * g.speed + g.phase).truncatingRemainder(dividingBy: 1)
+                let p = cache.point(at: CGFloat(tg))
+                let twinkle = 0.45 + 0.55 * (0.5 + 0.5 * sin(time * 1.7 + g.phase * 6.28))
+                let op = g.maxOpacity * twinkle
+                let rect = CGRect(x: p.x - 10, y: p.y - 2.4, width: 20, height: 4.8)
+                layer.fill(Path(ellipseIn: rect), with: .color(.white.opacity(op)))
+            }
         }
     }
 
-    private func drawBed(_ ctx: inout GraphicsContext, path: Path) {
-        ctx.stroke(path, with: .color(Palette.blue.opacity(0.22)),
-                   style: StrokeStyle(lineWidth: 2, lineCap: .round))
+    private func drawTravelLight(_ ctx: inout GraphicsContext, from: CGFloat, to: CGFloat) {
+        let a = max(0, min(1, from)), b = max(0, min(1, to))
+        guard b > a else { return }
+        let seg = cache.path.trimmedPath(from: a, to: b)
+        ctx.drawLayer { layer in
+            layer.addFilter(.blur(radius: 5))
+            layer.stroke(seg, with: .color(Palette.blue.opacity(0.28)),
+                         style: StrokeStyle(lineWidth: 9, lineCap: .round))
+        }
+        ctx.stroke(seg, with: .color(Palette.blue),
+                   style: StrokeStyle(lineWidth: 3, lineCap: .round))
+        // A hot white core makes it read as light refracting through the glass.
+        ctx.drawLayer { layer in
+            layer.blendMode = .plusLighter
+            layer.stroke(seg, with: .color(.white.opacity(0.5)),
+                         style: StrokeStyle(lineWidth: 1, lineCap: .round))
+        }
     }
 
     private func drawNodesAndLabels(_ ctx: inout GraphicsContext, size: CGSize, lightCenter: CGFloat) {
         for (i, node) in cache.nodes.enumerated() {
-            // Pulse as the light passes: a soft bump on distance in path space.
             let d = abs(lightCenter - config.nodeTs[i])
             let pulse = d < 0.08 ? exp(-pow(d / 0.035, 2)) : 0
-            let radius = 4 + 0.5 * pulse
-            let opacity = 0.35 + 0.65 * pulse
+            let radius = 4.5 + 0.8 * pulse
+            let ringOpacity = 0.4 + 0.6 * pulse
 
-            ctx.fill(disc(node, radius), with: .color(Palette.paper))
-            ctx.stroke(disc(node, radius), with: .color(Palette.blue.opacity(opacity)), lineWidth: 1.5)
+            // Glass bead: punch the paper, frost fill, ring, specular highlight.
+            ctx.fill(disc(node, radius + 1.5), with: .color(Palette.paper))
+            ctx.fill(disc(node, radius), with: .color(.white.opacity(0.6)))
+            ctx.fill(disc(node, radius), with: .color(Palette.blue.opacity(0.12 + 0.25 * pulse)))
+            ctx.stroke(disc(node, radius), with: .color(Palette.blue.opacity(ringOpacity)), lineWidth: 1.5)
+            ctx.drawLayer { layer in
+                layer.blendMode = .plusLighter
+                layer.fill(disc(CGPoint(x: node.x - radius * 0.35, y: node.y - radius * 0.4), radius * 0.32),
+                           with: .color(.white.opacity(0.9)))
+            }
 
             // Label — one style, alternating sides, clamped off the edges.
             var text = ctx.resolve(Text(config.labels[i])
@@ -139,7 +176,6 @@ struct WelcomeRiver: View {
             layer.translateBy(x: point.x, y: point.y)
             layer.rotate(by: .radians(Double(cache.boatTangent) + bobAngle))
 
-            // Wake — two short arcs trailing the stern, stretching at the top of the bob.
             let stretch = CGFloat(1 + max(0, -bobY) * 0.12)
             for (offset, span) in [(-6.0, 5.0), (-11.0, 6.5)] {
                 var wake = Path()
@@ -162,13 +198,17 @@ struct WelcomeRiver: View {
             mast.addLine(to: CGPoint(x: 0, y: -20))
             layer.stroke(mast, with: .color(Palette.ink), lineWidth: 1.5)
 
-            // Sail
+            // Sail + a glassy highlight down its leading edge.
             var sail = Path()
             sail.move(to: CGPoint(x: 1.6, y: -19))
             sail.addLine(to: CGPoint(x: 1.6, y: -2))
             sail.addQuadCurve(to: CGPoint(x: 10.5, y: -5), control: CGPoint(x: 7.5, y: -14))
             sail.closeSubpath()
             layer.fill(sail, with: .color(Palette.blue))
+            var sheen = Path()
+            sheen.move(to: CGPoint(x: 2.6, y: -17.5))
+            sheen.addLine(to: CGPoint(x: 2.6, y: -4))
+            layer.stroke(sheen, with: .color(.white.opacity(0.35)), lineWidth: 1)
         }
     }
 
@@ -208,6 +248,8 @@ struct RiverConfig {
     let h01: CGFloat = 0.16
     let h12: CGFloat = 0.16
     let h23: CGFloat = 0.18
+    /// Thickness of the glass water below the surface line.
+    let bodyDepth: CGFloat = 26
 
     let nodeTs: [CGFloat] = [0.28, 0.58, 0.88]
     let labels = ["FIND", "JOIN", "BELONG"]
@@ -219,33 +261,70 @@ struct RiverConfig {
     let travelDur: Double = 5.5
     let holdDur: Double = 2.5
 
+    /// The surface curve (top edge of the water).
     func path(width W: CGFloat, height H: CGFloat) -> Path {
+        let s = segments(width: W, height: H)
+        var path = Path()
+        path.move(to: s.a)
+        path.addCurve(to: s.b, control1: s.a1, control2: s.b2)
+        path.addCurve(to: s.c, control1: s.b1, control2: s.c2)
+        path.addCurve(to: s.d, control1: s.c1, control2: s.d2)
+        return path
+    }
+
+    /// The glass body: the surface curve, down one edge, back along an offset
+    /// bottom edge, closed — a ribbon of constant thickness `bodyDepth`.
+    func ribbonPath(width W: CGFloat, height H: CGFloat) -> Path {
+        let s = segments(width: W, height: H)
+        func off(_ p: CGPoint) -> CGPoint { CGPoint(x: p.x, y: p.y + bodyDepth) }
+        var path = Path()
+        path.move(to: s.a)
+        path.addCurve(to: s.b, control1: s.a1, control2: s.b2)
+        path.addCurve(to: s.c, control1: s.b1, control2: s.c2)
+        path.addCurve(to: s.d, control1: s.c1, control2: s.d2)
+        path.addLine(to: off(s.d))
+        path.addCurve(to: off(s.c), control1: off(s.d2), control2: off(s.c1))
+        path.addCurve(to: off(s.b), control1: off(s.c2), control2: off(s.b1))
+        path.addCurve(to: off(s.a), control1: off(s.b2), control2: off(s.a1))
+        path.closeSubpath()
+        return path
+    }
+
+    private typealias Segments = (a: CGPoint, b: CGPoint, c: CGPoint, d: CGPoint,
+                                  a1: CGPoint, b2: CGPoint, b1: CGPoint, c2: CGPoint, c1: CGPoint, d2: CGPoint)
+
+    private func segments(width W: CGFloat, height H: CGFloat) -> Segments {
         func pt(_ f: CGPoint) -> CGPoint { CGPoint(x: f.x * W, y: f.y * H) }
         let a = pt(p0), b = pt(p1), c = pt(p2), d = pt(p3)
-        var path = Path()
-        path.move(to: a)
-        path.addCurve(to: b, control1: CGPoint(x: a.x + h01 * W, y: a.y), control2: CGPoint(x: b.x - h01 * W, y: b.y))
-        path.addCurve(to: c, control1: CGPoint(x: b.x + h12 * W, y: b.y), control2: CGPoint(x: c.x - h12 * W, y: c.y))
-        path.addCurve(to: d, control1: CGPoint(x: c.x + h23 * W, y: c.y), control2: CGPoint(x: d.x - h23 * W, y: d.y))
-        return path
+        return (a, b, c, d,
+                CGPoint(x: a.x + h01 * W, y: a.y), CGPoint(x: b.x - h01 * W, y: b.y),
+                CGPoint(x: b.x + h12 * W, y: b.y), CGPoint(x: c.x - h12 * W, y: c.y),
+                CGPoint(x: c.x + h23 * W, y: c.y), CGPoint(x: d.x - h23 * W, y: d.y))
     }
 }
 
 // MARK: - Sample cache
 
-/// Path + static sample points (nodes, boat, boat tangent), recomputed only when
-/// the width changes — not every frame.
+/// Path, glass ribbon, gradient bounds and static sample points, recomputed only
+/// when the width changes — not every frame.
 private final class SampleCache {
     private(set) var path = Path()
+    private(set) var ribbon = Path()
     private(set) var nodes: [CGPoint] = []
     private(set) var boat: CGPoint = .zero
     private(set) var boatTangent: CGFloat = 0
+    private(set) var topY: CGFloat = 0
+    private(set) var bottomY: CGFloat = 0
     private var width: CGFloat = -1
 
     func refresh(config: RiverConfig, width W: CGFloat, height H: CGFloat) {
         guard W != width else { return }
         width = W
         path = config.path(width: W, height: H)
+        ribbon = config.ribbonPath(width: W, height: H)
+        let bounds = path.boundingRect
+        topY = bounds.minY
+        bottomY = bounds.maxY + config.bodyDepth
         nodes = config.nodeTs.map { point(at: $0) }
         boat = point(at: config.boatT)
         let before = point(at: max(0, config.boatT - 0.01))
@@ -253,7 +332,7 @@ private final class SampleCache {
         boatTangent = atan2(after.y - before.y, after.x - before.x)
     }
 
-    private func point(at t: CGFloat) -> CGPoint {
+    func point(at t: CGFloat) -> CGPoint {
         path.trimmedPath(from: 0, to: max(0.0001, min(1, t))).currentPoint ?? .zero
     }
 }

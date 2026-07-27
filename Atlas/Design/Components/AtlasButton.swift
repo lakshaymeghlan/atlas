@@ -38,24 +38,23 @@ private struct AtlasButtonStyle: ButtonStyle {
 
     func makeBody(configuration: Configuration) -> some View {
         let pressed = configuration.isPressed
-        configuration.label
+        let label = configuration.label
             .foregroundStyle(kind == .primary ? Color.white : Palette.ink)
             .frame(maxWidth: .infinity, minHeight: 56)
             .padding(.horizontal, Space.l)
-            .background(background(pressed: pressed))
-            .clipShape(RoundedRectangle(cornerRadius: Radius.button, style: .continuous))
-            .overlay(
-                RoundedRectangle(cornerRadius: Radius.button, style: .continuous)
-                    .stroke(Palette.border, lineWidth: kind == .secondary ? 1 : 0)
-            )
+
+        return glass(label, pressed: pressed)
             .opacity(isEnabled ? 1 : 0.4)
+            .scaleEffect(pressed ? 0.985 : 1)
             .animation(.easeOut(duration: Motion.tap), value: pressed)
     }
 
-    private func background(pressed: Bool) -> Color {
+    @ViewBuilder private func glass(_ label: some View, pressed: Bool) -> some View {
         switch kind {
-        case .primary:   return pressed ? Palette.bluePressed : Palette.blue
-        case .secondary: return pressed ? Palette.chip : Palette.card
+        case .primary:
+            label.tintedGlass(Radius.button, fill: pressed ? Palette.bluePressed : Palette.blue)
+        case .secondary:
+            label.glassSurface(Radius.button, tint: pressed ? Palette.chip.opacity(0.7) : .white.opacity(0.4))
         }
     }
 }

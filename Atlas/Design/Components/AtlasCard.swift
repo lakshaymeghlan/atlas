@@ -10,13 +10,7 @@ struct AtlasCard<Content: View>: View {
         content
             .padding(padding)
             .frame(maxWidth: .infinity, alignment: .leading)
-            .background(Palette.card)
-            .clipShape(RoundedRectangle(cornerRadius: Radius.card, style: .continuous))
-            .overlay(
-                RoundedRectangle(cornerRadius: Radius.card, style: .continuous)
-                    .stroke(Palette.border, lineWidth: 1)
-            )
-            .atlasCardShadow()
+            .glassSurface(Radius.card, tint: .white.opacity(0.55))
     }
 }
 
