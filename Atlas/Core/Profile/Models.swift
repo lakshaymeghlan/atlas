@@ -119,6 +119,13 @@ struct UserProfile: Codable, Equatable {
 
     var isOnboarded: Bool { onboardedAt != nil }
 
+    /// True once a CV has been parsed (or details entered) — used to resume at
+    /// the confirm step after a force-quit rather than restarting the upload.
+    var hasParsedContent: Bool {
+        !experiences.isEmpty || !education.isEmpty || !skills.isEmpty
+            || !languages.isEmpty || headline != nil || location != nil
+    }
+
     /// Merge a parse result into the profile, preserving identity-derived
     /// fields (email/careerPath) that don't come from the CV.
     mutating func apply(_ r: CVParseResult) {
