@@ -1,8 +1,8 @@
 import SwiftUI
 
 /// Boat drawing for the onboarding progress river (`Current`). The boat is the
-/// raft — it rides the current to each checkpoint. (S01 draws its own boat in
-/// `WelcomeRiver`.)
+/// raft — it rides the current to each checkpoint. (S01 draws its own paper
+/// boat in `RiverBand`.)
 enum RiverArt {
     /// Draw a little sailboat centred on `point` (its deck sits on the waterline,
     /// the hull dips below). Unit geometry scaled by `scale`; `tilt` rotates it
