@@ -13,6 +13,7 @@ struct RootView: View {
                 .transition(Motion.screenTransition)
         }
         .animation(Motion.screenTransitionAnimation, value: stateID)
+        .dynamicTypeSize(...DynamicTypeSize.xxLarge) // support up to XXL; cap so layouts hold
     }
 
     @ViewBuilder private var content: some View {

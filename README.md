@@ -52,3 +52,26 @@ Preview them in isolation — `Current_Previews`, `RiverCanvas_Previews`.
 
 The mock parser returns the exact JSON shape the real edge function will, so
 `CVParseResult` (and its tests) carry straight over.
+
+## Demo hooks
+
+The mock parser branches on the picked filename so you can see every path
+without a backend:
+
+- normal name → success (canned profile) after ~1.8s
+- name contains `scan` / `image` / `photo` → the clean **failure** state
+- name contains `slow` → the **>12s** "still working" copy
+
+Enable **Reduce Motion** (Settings › Accessibility, or the simulator's setting)
+to see the river collapse to a static gradient and transitions to plain fades.
+
+## Tests
+
+`⌘U` runs the unit tests: CV JSON decoder (incl. malformed / missing-field),
+`JourneyState` restoration, and file validation.
+
+## Quality notes
+
+- Light mode only (dark deferred to Phase 2).
+- Dynamic Type supported and capped at XXL so layouts hold.
+- No force unwraps in app code; `os.Logger` per feature; no `print`.

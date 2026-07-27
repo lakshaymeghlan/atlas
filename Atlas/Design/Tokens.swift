@@ -54,15 +54,19 @@ extension TextRole {
     /// back to SF Pro Display automatically when the custom font is absent.
     private static let displayFace = "GeneralSans-Bold"
 
+    /// Fonts scale with Dynamic Type. The SF Pro roles map to semantic text
+    /// styles whose default sizes match the spec exactly (title3 20, subheadline
+    /// 15, footnote 13, caption2 11); the display faces use `relativeTo` so the
+    /// custom font (or its SF Pro fallback) scales too.
     var font: Font {
         switch self {
-        case .displayLarge: return .custom(Self.displayFace, size: 42).weight(.bold)
-        case .display:      return .custom(Self.displayFace, size: 34).weight(.bold)
-        case .title:        return .system(size: 20, weight: .semibold)
-        case .body:         return .system(size: 15, weight: .regular)
-        case .bodyStrong:   return .system(size: 15, weight: .semibold)
-        case .caption:      return .system(size: 13, weight: .regular)
-        case .meta:         return .system(size: 11, weight: .medium, design: .monospaced)
+        case .displayLarge: return .custom(Self.displayFace, size: 42, relativeTo: .largeTitle).weight(.bold)
+        case .display:      return .custom(Self.displayFace, size: 34, relativeTo: .largeTitle).weight(.bold)
+        case .title:        return .system(.title3, design: .default).weight(.semibold)
+        case .body:         return .system(.subheadline, design: .default)
+        case .bodyStrong:   return .system(.subheadline, design: .default).weight(.semibold)
+        case .caption:      return .system(.footnote, design: .default)
+        case .meta:         return .system(.caption2, design: .monospaced).weight(.medium)
         }
     }
 

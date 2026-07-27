@@ -21,19 +21,19 @@ struct ExperienceEditSheet: View {
                     }
                 }
                 .onDelete { experiences.remove(atOffsets: $0) }
-                Button {
-                    experiences.append(Experience(role: "", company: ""))
-                } label: { Label("Add role", systemImage: "plus") }
+                addButton("Add role") { experiences.append(Experience(role: "", company: "")) }
             }
             .navigationTitle("Experience")
             .navigationBarTitleDisplayMode(.inline)
-            .toolbar { doneButton { experiences.removeAll { $0.role.isEmpty && $0.company.isEmpty } } }
-        }
-    }
-
-    private func doneButton(cleanup: @escaping () -> Void) -> some ToolbarContent {
-        ToolbarItem(placement: .confirmationAction) {
-            Button("Done") { cleanup(); dismiss() }
+            .toolbar {
+                ToolbarItem(placement: .cancellationAction) { EditButton() }
+                ToolbarItem(placement: .confirmationAction) {
+                    Button("Done") {
+                        experiences.removeAll { $0.role.isEmpty && $0.company.isEmpty }
+                        dismiss()
+                    }
+                }
+            }
         }
     }
 }
@@ -55,13 +55,12 @@ struct EducationEditSheet: View {
                     }
                 }
                 .onDelete { education.remove(atOffsets: $0) }
-                Button {
-                    education.append(Education(institution: ""))
-                } label: { Label("Add education", systemImage: "plus") }
+                addButton("Add education") { education.append(Education(institution: "")) }
             }
             .navigationTitle("Education")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
+                ToolbarItem(placement: .cancellationAction) { EditButton() }
                 ToolbarItem(placement: .confirmationAction) {
                     Button("Done") {
                         education.removeAll { $0.institution.isEmpty }
@@ -84,13 +83,12 @@ struct SkillsEditSheet: View {
                     TextField("Skill", text: $s.name)
                 }
                 .onDelete { skills.remove(atOffsets: $0) }
-                Button {
-                    skills.append(Skill(name: "", source: .manual))
-                } label: { Label("Add skill", systemImage: "plus") }
+                addButton("Add skill") { skills.append(Skill(name: "", source: .manual)) }
             }
             .navigationTitle("Skills")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
+                ToolbarItem(placement: .cancellationAction) { EditButton() }
                 ToolbarItem(placement: .confirmationAction) {
                     Button("Done") {
                         skills.removeAll { $0.name.trimmingCharacters(in: .whitespaces).isEmpty }
@@ -116,13 +114,12 @@ struct LanguagesEditSheet: View {
                     }
                 }
                 .onDelete { languages.remove(atOffsets: $0) }
-                Button {
-                    languages.append(Language(name: ""))
-                } label: { Label("Add language", systemImage: "plus") }
+                addButton("Add language") { languages.append(Language(name: "")) }
             }
             .navigationTitle("Languages")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
+                ToolbarItem(placement: .cancellationAction) { EditButton() }
                 ToolbarItem(placement: .confirmationAction) {
                     Button("Done") {
                         languages.removeAll { $0.name.trimmingCharacters(in: .whitespaces).isEmpty }
@@ -132,4 +129,12 @@ struct LanguagesEditSheet: View {
             }
         }
     }
+}
+
+/// Shared "add a row" button styled for the plain list sheets.
+private func addButton(_ title: String, action: @escaping () -> Void) -> some View {
+    Button(action: action) {
+        Label(title, systemImage: "plus")
+    }
+    .foregroundStyle(Palette.blue)
 }

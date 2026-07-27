@@ -20,14 +20,17 @@ final class AppRouter {
         self.state = AppRouter.resolveInitialState(auth: auth, profile: profile)
     }
 
-    /// Restoration: session + onboarded → home; session but not onboarded →
-    /// the furthest completed step; no session → welcome.
     static func resolveInitialState(auth: AuthStore, profile: ProfileStore) -> JourneyState {
-        guard auth.isSignedIn else { return .welcome }
-        let p = profile.profile
-        if p.isOnboarded { return .home }
-        if p.hasParsedContent { return .confirmProfile }
-        if p.careerPath != nil { return .uploadCV }
+        initialState(isSignedIn: auth.isSignedIn, profile: profile.profile)
+    }
+
+    /// Restoration logic (pure, testable): session + onboarded → home; session
+    /// but not onboarded → the furthest completed step; no session → welcome.
+    nonisolated static func initialState(isSignedIn: Bool, profile: UserProfile) -> JourneyState {
+        guard isSignedIn else { return .welcome }
+        if profile.isOnboarded { return .home }
+        if profile.hasParsedContent { return .confirmProfile }
+        if profile.careerPath != nil { return .uploadCV }
         return .careerPath
     }
 

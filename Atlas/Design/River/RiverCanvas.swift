@@ -60,8 +60,11 @@ struct RiverCanvas: View {
             .ignoresSafeArea()
 
             if Config.useShaders {
+                // Bound the time before narrowing to Float so the ripple stays
+                // smooth (raw seconds-since-2001 would lose precision as Float).
+                let shaderTime = Float(t.truncatingRemainder(dividingBy: 3600))
                 canvas.distortionEffect(
-                    ShaderLibrary.riverRipple(.float(t)),
+                    ShaderLibrary.riverRipple(.float(shaderTime)),
                     maxSampleOffset: CGSize(width: 3, height: 0)
                 )
             } else {
