@@ -21,11 +21,26 @@ struct Current: View {
         count <= 1 ? 0 : CGFloat(i) / CGFloat(count - 1)
     }
 
+    /// On appear, animate the flow completing into the current node (extending
+    /// from the previous one) with a success haptic — the signature beat. Stage
+    /// 0 (the Welcome promise, career path) just sits at its position.
+    private func flowIntoCurrentStage() {
+        let target = fraction(currentStage)
+        guard currentStage > 0 else { animatedProgress = target; return }
+        if Motion.reduceMotion {
+            animatedProgress = target
+        } else {
+            animatedProgress = fraction(currentStage - 1)
+            withAnimation(Motion.standard(Motion.river)) { animatedProgress = target }
+        }
+        UINotificationFeedbackGenerator().notificationOccurred(.success)
+    }
+
     var body: some View {
         canvas
             .frame(maxWidth: .infinity)
             .frame(height: 44)
-            .onAppear { animatedProgress = fraction(currentStage) }
+            .onAppear { flowIntoCurrentStage() }
             .onChange(of: currentStage) { old, new in
                 let anim = Motion.reduceMotion
                     ? Animation.easeInOut(duration: 0.16)
