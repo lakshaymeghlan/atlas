@@ -1,0 +1,20 @@
+# XcodeGen output — regenerate with `xcodegen generate`
+Atlas.xcodeproj/
+Atlas/Info.plist
+
+# Xcode
+build/
+DerivedData/
+*.xcuserstate
+*.xcuserdatad/
+xcuserdata/
+
+# Secrets (added when the backend lands)
+Secrets.xcconfig
+
+# SPM
+.build/
+.swiftpm/
+
+# macOS
+.DS_Store
