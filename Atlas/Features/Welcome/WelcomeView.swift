@@ -1,9 +1,10 @@
 import SwiftUI
 
-/// S01 · Welcome — editorial luxury layout. Warm off-white, a serif hero on the
-/// left, a tone-on-tone white river flowing down the right with a paper boat, a
-/// three-column Find·Join·Belong feature grid, and two white sign-in cards.
-/// Light only.
+/// S01 · Welcome — premium editorial onboarding. Warm ivory with a whisper of a
+/// radial glow; a wordmark + theme toggle; a Find·Join·Belong rail over a
+/// silk-flow river with a drifting paper boat; a large left-aligned hero, a
+/// reassurance pill, two glass sign-in buttons, and a locked footer. Everything
+/// breathes; everything eases in.
 struct WelcomeView: View {
     var onSignedIn: () -> Void
 
@@ -13,89 +14,111 @@ struct WelcomeView: View {
     private let margin: CGFloat = 24
     private var reduce: Bool { Motion.reduceMotion }
 
-    // Palette (light only)
-    private let bg = Color(hex: "F3F2EF")
-    private let ink = Color(hex: "1A1A1C")
-    private let inkSecondary = Color(hex: "6B6B70")
-    private let inkTertiary = Color(hex: "9A9A9F")
-    private let wellBg = Color(hex: "EAE9E5")
-    private let iconTint = Color(hex: "3C3C40")
-    private let cardBorder = Color(hex: "ECEBE7")
-
-    private let features: [(String, String, String)] = [
-        ("magnifyingglass", "Find", "Discover roles\nthat fit you."),
-        ("briefcase", "Join", "Navigate hiring\nwith confidence."),
-        ("person.2", "Belong", "Build meaningful\nconnections."),
-    ]
-
     var body: some View {
         ZStack {
-            bg.ignoresSafeArea()
-            WhiteRibbon(background: bg).ignoresSafeArea()
+            background.ignoresSafeArea()
 
             VStack(alignment: .leading, spacing: 0) {
                 header
+                    .padding(.horizontal, margin)
+                    .padding(.top, Space.s)
                     .opacity(appeared ? 1 : 0)
                     .animation(reveal(0), value: appeared)
 
-                Spacer().frame(height: 78)
+                Spacer().frame(height: 22)
+
+                Group {
+                    stageLabels.padding(.horizontal, margin)
+                    RiverBand(tint: WP.river, nodeInset: margin)
+                }
+                .opacity(appeared ? 1 : 0)
+                .animation(reveal(0.06), value: appeared)
+
+                Spacer().frame(height: 26)
 
                 hero
+                    .padding(.horizontal, margin)
                     .opacity(appeared ? 1 : 0)
-                    .offset(y: rise(appeared ? 0 : 14))
-                    .animation(reveal(0.06), value: appeared)
+                    .offset(y: rise(appeared ? 0 : 16))
+                    .animation(reveal(0.1), value: appeared)
 
                 supporting
-                    .padding(.top, 22)
+                    .padding(.horizontal, margin)
+                    .padding(.top, 16)
                     .opacity(appeared ? 1 : 0)
-                    .offset(y: rise(appeared ? 0 : 14))
-                    .animation(reveal(0.12), value: appeared)
+                    .offset(y: rise(appeared ? 0 : 16))
+                    .animation(reveal(0.15), value: appeared)
 
-                featureGrid
-                    .padding(.top, 34)
+                badge
+                    .padding(.horizontal, margin)
+                    .padding(.top, 18)
                     .opacity(appeared ? 1 : 0)
-                    .offset(y: rise(appeared ? 0 : 14))
-                    .animation(reveal(0.18), value: appeared)
+                    .offset(y: rise(appeared ? 0 : 16))
+                    .animation(reveal(0.2), value: appeared)
 
-                Spacer(minLength: 34)
+                Spacer(minLength: 24)
 
-                buttons
-                footer.padding(.top, 18)
+                buttons.padding(.horizontal, margin)
+
+                footer
+                    .padding(.horizontal, margin)
+                    .padding(.top, 16)
+                    .opacity(appeared ? 1 : 0)
+                    .animation(reveal(0.36), value: appeared)
             }
-            .padding(.horizontal, margin)
-            .padding(.top, Space.s)
             .padding(.bottom, 14)
             .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
         }
         .onAppear { appeared = true }
     }
 
-    // MARK: Header
+    // MARK: Background
 
-    private var header: some View {
-        HStack(alignment: .center) {
-            Text("ATLAS")
-                .font(.system(size: 15, weight: .semibold))
-                .tracking(9)
-                .foregroundStyle(ink)
-            Spacer()
-            Image(systemName: "sun.max")
-                .font(.system(size: 16, weight: .regular))
-                .foregroundStyle(ink)
-                .frame(width: 42, height: 42)
-                .background(Circle().fill(.white))
-                .overlay(Circle().strokeBorder(cardBorder, lineWidth: 1))
-                .accessibilityHidden(true)
+    private var background: some View {
+        ZStack {
+            WP.paper
+            RadialGradient(
+                gradient: Gradient(colors: [.white.opacity(0.5), .clear]),
+                center: UnitPoint(x: 0.5, y: 0.15),
+                startRadius: 6,
+                endRadius: 560
+            )
         }
     }
 
-    // MARK: Hero + support
+    // MARK: Header
+
+    private var header: some View {
+        HStack {
+            Text("ATLAS")
+                .font(.system(size: 15, weight: .semibold))
+                .tracking(9)
+                .foregroundStyle(WP.ink)
+            Spacer()
+        }
+    }
+
+    // MARK: Stage labels (aligned over the river's ring nodes)
+
+    private var stageLabels: some View {
+        HStack(spacing: 0) {
+            ForEach(["Find", "Join", "Belong"], id: \.self) { title in
+                Text(title)
+                    .font(.system(size: 15, weight: .regular))
+                    .foregroundStyle(WP.ink.opacity(0.72))
+                    .frame(maxWidth: .infinity)
+            }
+        }
+    }
+
+    // MARK: Hero
 
     private var hero: some View {
         Text("Your career,\nwithout\nthe chaos.")
-            .font(.system(size: 46, weight: .medium, design: .serif))
-            .foregroundStyle(ink)
-            .lineSpacing(2)
+            .font(.system(size: 40, weight: .semibold))
+            .tracking(-0.6)
+            .lineSpacing(-1)
+            .foregroundStyle(WP.ink)
             .fixedSize(horizontal: false, vertical: true)
             .frame(maxWidth: .infinity, alignment: .leading)
     }
@@ -103,53 +126,38 @@ struct WelcomeView: View {
     private var supporting: some View {
         Text("Atlas learns your story and connects you to work that actually fits.")
             .font(.system(size: 17, weight: .regular))
-            .lineSpacing(5)
-            .foregroundStyle(inkSecondary)
+            .lineSpacing(6)
+            .foregroundStyle(WP.inkSecondary)
             .fixedSize(horizontal: false, vertical: true)
-            .frame(maxWidth: 250, alignment: .leading)
+            .frame(maxWidth: 260, alignment: .leading)
     }
 
-    // MARK: Feature grid
-
-    private var featureGrid: some View {
-        HStack(alignment: .top, spacing: 12) {
-            ForEach(features, id: \.1) { symbol, title, desc in
-                VStack(alignment: .leading, spacing: 10) {
-                    RoundedRectangle(cornerRadius: 12, style: .continuous)
-                        .fill(wellBg)
-                        .frame(width: 44, height: 44)
-                        .overlay(
-                            Image(systemName: symbol)
-                                .font(.system(size: 18, weight: .regular))
-                                .foregroundStyle(iconTint)
-                        )
-                    VStack(alignment: .leading, spacing: 3) {
-                        Text(title)
-                            .font(.system(size: 16, weight: .semibold))
-                            .foregroundStyle(ink)
-                        Text(desc)
-                            .font(.system(size: 13, weight: .regular))
-                            .foregroundStyle(inkSecondary)
-                            .lineSpacing(2)
-                            .fixedSize(horizontal: false, vertical: true)
-                    }
-                }
-                .frame(maxWidth: .infinity, alignment: .leading)
-            }
+    private var badge: some View {
+        HStack(spacing: 8) {
+            Image(systemName: "sparkle")
+                .font(.system(size: 12, weight: .semibold))
+                .foregroundStyle(WP.river)
+            Text("No forms. No endless applications. Just forward.")
+                .font(.system(size: 13, weight: .regular))
+                .foregroundStyle(WP.inkSecondary)
         }
+        .padding(.vertical, 10)
+        .padding(.horizontal, 16)
+        .background(.ultraThinMaterial, in: Capsule())
+        .overlay(Capsule().strokeBorder(WP.hairline, lineWidth: 1))
     }
 
     // MARK: Buttons
 
     private var buttons: some View {
-        VStack(spacing: 16) {
+        VStack(spacing: 14) {
             authButton(.linkedIn, "Continue with LinkedIn")
                 .opacity(appeared ? 1 : 0)
-                .offset(y: rise(appeared ? 0 : 26))
+                .offset(y: rise(appeared ? 0 : 30))
                 .animation(reveal(0.24), value: appeared)
             authButton(.github, "Continue with GitHub")
                 .opacity(appeared ? 1 : 0)
-                .offset(y: rise(appeared ? 0 : 26))
+                .offset(y: rise(appeared ? 0 : 30))
                 .animation(reveal(0.3), value: appeared)
         }
     }
@@ -158,16 +166,16 @@ struct WelcomeView: View {
         Button {
             signIn(mark == .linkedIn ? .linkedIn : .github)
         } label: {
-            HStack(spacing: 16) {
-                BrandMarkView(mark: mark, size: 30, monoColor: ink)
-                Text(title).font(.system(size: 16, weight: .medium)).foregroundStyle(ink)
+            HStack(spacing: 14) {
+                BrandMarkView(mark: mark, size: 26, monoColor: WP.ink)
+                Text(title).font(.system(size: 16, weight: .medium))
                 Spacer(minLength: 8)
                 Image(systemName: "arrow.right")
-                    .font(.system(size: 18, weight: .regular))
-                    .foregroundStyle(ink.opacity(0.85))
+                    .font(.system(size: 16, weight: .regular))
+                    .foregroundStyle(WP.ink.opacity(0.55))
             }
         }
-        .buttonStyle(CardButtonStyle(border: cardBorder))
+        .buttonStyle(GlassAuthButtonStyle(ink: WP.ink, hairline: WP.hairline))
         .disabled(auth.isAuthenticating)
     }
 
@@ -180,7 +188,7 @@ struct WelcomeView: View {
             Text("We only read what you approve.")
                 .font(.system(size: 13, weight: .regular))
         }
-        .foregroundStyle(inkTertiary)
+        .foregroundStyle(WP.inkTertiary)
         .frame(maxWidth: .infinity, alignment: .center)
     }
 
@@ -197,28 +205,58 @@ struct WelcomeView: View {
 
     private func reveal(_ delay: Double) -> Animation {
         reduce ? .easeOut(duration: 0.25).delay(delay)
-               : .spring(response: 0.6, dampingFraction: 0.9).delay(delay)
+               : .spring(response: 0.62, dampingFraction: 0.86).delay(delay)
     }
 }
 
-// MARK: - White card button
+// MARK: - Palette (Welcome, light only)
 
-private struct CardButtonStyle: ButtonStyle {
-    let border: Color
+private enum WP {
+    static let paper = Color(hex: "FCFBF8")
+    static let ink = Color(hex: "0C0C0D")
+    static let inkSecondary = Color(hex: "5B5B60")
+    static let inkTertiary = Color(hex: "9A9A9F")
+    static let hairline = Color(hex: "E7E5E0")
+    static let river = Color(hex: "7A8FFF")
+}
+
+// MARK: - Glass button
+
+/// Glassmorphism sign-in button: 64pt tall, 18pt radius, frosted material with a
+/// top sheen and specular rim, a soft shadow, and a spring press.
+private struct GlassAuthButtonStyle: ButtonStyle {
+    let ink: Color
+    let hairline: Color
 
     func makeBody(configuration: Configuration) -> some View {
         let pressed = configuration.isPressed
-        let shape = RoundedRectangle(cornerRadius: 16, style: .continuous)
+        let shape = RoundedRectangle(cornerRadius: 18, style: .continuous)
         configuration.label
-            .frame(maxWidth: .infinity, minHeight: 60)
-            .padding(.horizontal, 18)
-            .background(shape.fill(.white))
-            .overlay(shape.strokeBorder(border, lineWidth: 1))
+            .foregroundStyle(ink)
+            .frame(maxWidth: .infinity, minHeight: 64)
+            .padding(.horizontal, 20)
+            .background {
+                shape.fill(.ultraThinMaterial)
+                    .overlay {
+                        shape.fill(
+                            LinearGradient(colors: [.white.opacity(0.35), .white.opacity(0)],
+                                           startPoint: .top, endPoint: .center)
+                        )
+                        .blendMode(.plusLighter)
+                    }
+            }
+            .overlay {
+                shape.strokeBorder(
+                    LinearGradient(colors: [.white.opacity(0.55), hairline],
+                                   startPoint: .top, endPoint: .bottom),
+                    lineWidth: 1
+                )
+            }
             .clipShape(shape)
-            .shadow(color: .black.opacity(pressed ? 0.03 : 0.06),
-                    radius: pressed ? 5 : 12, x: 0, y: pressed ? 2 : 6)
-            .scaleEffect(pressed ? 0.99 : 1)
-            .animation(.spring(response: 0.3, dampingFraction: 0.7), value: pressed)
+            .shadow(color: .black.opacity(pressed ? 0.04 : 0.09),
+                    radius: pressed ? 6 : 16, x: 0, y: pressed ? 3 : 9)
+            .scaleEffect(pressed ? 0.985 : 1)
+            .animation(.spring(response: 0.34, dampingFraction: 0.7), value: pressed)
     }
 }
 

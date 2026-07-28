@@ -35,20 +35,18 @@ struct BrandMarkView: View {
         }
     }
 
-    /// Approximate GitHub octocat silhouette, filled, normalised to `size`.
+    /// Clean GitHub octocat silhouette (approximate): a rounded head/body with
+    /// two ears. Filled, normalised to `size`.
     private static func octocat(in size: CGSize) -> Path {
         let s = min(size.width, size.height)
         func p(_ x: CGFloat, _ y: CGFloat) -> CGPoint { CGPoint(x: x * s, y: y * s) }
         var path = Path()
-        // Head
-        path.addEllipse(in: CGRect(x: 0.10 * s, y: 0.22 * s, width: 0.80 * s, height: 0.60 * s))
-        // Ears
-        path.move(to: p(0.26, 0.30)); path.addLine(to: p(0.24, 0.06)); path.addLine(to: p(0.46, 0.24)); path.closeSubpath()
-        path.move(to: p(0.74, 0.30)); path.addLine(to: p(0.76, 0.06)); path.addLine(to: p(0.54, 0.24)); path.closeSubpath()
-        // Body
-        path.addEllipse(in: CGRect(x: 0.20 * s, y: 0.56 * s, width: 0.60 * s, height: 0.40 * s))
-        // Little arm curl (lower left)
-        path.addEllipse(in: CGRect(x: 0.10 * s, y: 0.68 * s, width: 0.16 * s, height: 0.16 * s))
+        // Head + body as one soft rounded silhouette.
+        path.addRoundedRect(in: CGRect(x: 0.13 * s, y: 0.24 * s, width: 0.74 * s, height: 0.66 * s),
+                            cornerSize: CGSize(width: 0.32 * s, height: 0.30 * s))
+        // Ears, rooted cleanly on the head.
+        path.move(to: p(0.30, 0.30)); path.addLine(to: p(0.28, 0.07)); path.addLine(to: p(0.48, 0.26)); path.closeSubpath()
+        path.move(to: p(0.70, 0.30)); path.addLine(to: p(0.72, 0.07)); path.addLine(to: p(0.52, 0.26)); path.closeSubpath()
         return path
     }
 }
