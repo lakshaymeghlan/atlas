@@ -1,9 +1,10 @@
 import SwiftUI
 
-/// S01 · Welcome — rebuilt as a premium, editorial onboarding screen. Warm ivory
-/// with a whisper of a radial glow, a wordmark + theme toggle, a Find·Join·Belong
-/// rail over a flowing river with a drifting paper boat, a large left-aligned
-/// hero, and two glass sign-in buttons. Everything breathes; everything eases in.
+/// S01 · Welcome — premium editorial onboarding. Warm ivory with a whisper of a
+/// radial glow; a wordmark + theme toggle; a Find·Join·Belong rail over a
+/// silk-flow river with a drifting paper boat; a large left-aligned hero, a
+/// reassurance pill, two glass sign-in buttons, and a locked footer. Everything
+/// breathes; everything eases in.
 struct WelcomeView: View {
     var onSignedIn: () -> Void
 
@@ -26,19 +27,16 @@ struct WelcomeView: View {
                     .opacity(appeared ? 1 : 0)
                     .animation(reveal(0), value: appeared)
 
-                Spacer(minLength: 36)
+                Spacer().frame(height: 22)
 
-                stageRail
-                    .padding(.horizontal, margin + 4)
-                    .opacity(appeared ? 1 : 0)
-                    .animation(reveal(0.04), value: appeared)
+                Group {
+                    stageLabels.padding(.horizontal, margin)
+                    RiverBand(tint: theme.river, isDark: isDark, nodeInset: margin)
+                }
+                .opacity(appeared ? 1 : 0)
+                .animation(reveal(0.06), value: appeared)
 
-                RiverBand(tint: theme.river, isDark: isDark)
-                    .padding(.top, 18)
-                    .opacity(appeared ? 1 : 0)
-                    .animation(reveal(0.08), value: appeared)
-
-                Spacer(minLength: 44)
+                Spacer().frame(height: 26)
 
                 hero
                     .padding(.horizontal, margin)
@@ -48,23 +46,29 @@ struct WelcomeView: View {
 
                 supporting
                     .padding(.horizontal, margin)
-                    .padding(.top, 22)
+                    .padding(.top, 16)
                     .opacity(appeared ? 1 : 0)
                     .offset(y: rise(appeared ? 0 : 16))
-                    .animation(reveal(0.16), value: appeared)
+                    .animation(reveal(0.15), value: appeared)
 
-                Spacer(minLength: 40)
-
-                buttons
+                badge
                     .padding(.horizontal, margin)
+                    .padding(.top, 18)
+                    .opacity(appeared ? 1 : 0)
+                    .offset(y: rise(appeared ? 0 : 16))
+                    .animation(reveal(0.2), value: appeared)
+
+                Spacer(minLength: 24)
+
+                buttons.padding(.horizontal, margin)
 
                 footer
                     .padding(.horizontal, margin)
-                    .padding(.top, 20)
+                    .padding(.top, 16)
                     .opacity(appeared ? 1 : 0)
-                    .animation(reveal(0.34), value: appeared)
+                    .animation(reveal(0.36), value: appeared)
             }
-            .padding(.bottom, 18)
+            .padding(.bottom, 14)
             .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
         }
         .environment(\.colorScheme, theme.colorScheme)
@@ -78,10 +82,10 @@ struct WelcomeView: View {
             theme.paper
             RadialGradient(
                 gradient: Gradient(colors: [
-                    isDark ? theme.river.opacity(0.07) : .white.opacity(0.55),
+                    isDark ? theme.river.opacity(0.07) : .white.opacity(0.5),
                     .clear,
                 ]),
-                center: UnitPoint(x: 0.5, y: 0.14),
+                center: UnitPoint(x: 0.5, y: 0.16),
                 startRadius: 6,
                 endRadius: 560
             )
@@ -94,8 +98,8 @@ struct WelcomeView: View {
     private var header: some View {
         HStack(alignment: .center) {
             Text("ATLAS")
-                .font(.system(size: 14, weight: .semibold, design: .default))
-                .tracking(3)
+                .font(.system(size: 15, weight: .semibold))
+                .tracking(9)
                 .foregroundStyle(theme.ink)
             Spacer()
             themeToggle
@@ -106,10 +110,10 @@ struct WelcomeView: View {
         Button {
             withAnimation(.spring(response: 0.5, dampingFraction: 0.8)) { isDark.toggle() }
         } label: {
-            Image(systemName: isDark ? "moon.stars.fill" : "sun.max.fill")
-                .font(.system(size: 15, weight: .medium))
+            Image(systemName: isDark ? "moon.stars" : "sun.max")
+                .font(.system(size: 16, weight: .regular))
                 .foregroundStyle(theme.ink)
-                .frame(width: 40, height: 40)
+                .frame(width: 42, height: 42)
                 .background(.ultraThinMaterial, in: Circle())
                 .overlay(Circle().strokeBorder(theme.hairline, lineWidth: 1))
                 .contentTransition(.symbolEffect(.replace))
@@ -117,52 +121,53 @@ struct WelcomeView: View {
         .accessibilityLabel(isDark ? "Switch to light appearance" : "Switch to dark appearance")
     }
 
-    // MARK: Stage rail
+    // MARK: Stage labels (aligned over the river's ring nodes)
 
-    private var stageRail: some View {
-        HStack(spacing: 12) {
-            stageLabel("Find")
-            connector
-            stageLabel("Join")
-            connector
-            stageLabel("Belong")
+    private var stageLabels: some View {
+        HStack(spacing: 0) {
+            ForEach(["Find", "Join", "Belong"], id: \.self) { title in
+                Text(title)
+                    .font(.system(size: 15, weight: .regular))
+                    .foregroundStyle(theme.ink.opacity(0.72))
+                    .frame(maxWidth: .infinity)
+            }
         }
-    }
-
-    private func stageLabel(_ title: String) -> some View {
-        Text(title)
-            .font(.system(size: 12, weight: .medium))
-            .tracking(0.6)
-            .foregroundStyle(theme.inkTertiary)
-            .fixedSize()
-    }
-
-    private var connector: some View {
-        Rectangle()
-            .fill(theme.hairline)
-            .frame(height: 1)
-            .frame(maxWidth: .infinity)
     }
 
     // MARK: Hero
 
     private var hero: some View {
         Text("Your career,\nwithout\nthe chaos.")
-            .font(.system(size: 54, weight: .bold, design: .default))
-            .tracking(-1.4)
-            .lineSpacing(-3)
+            .font(.system(size: 40, weight: .semibold))
+            .tracking(-0.6)
+            .lineSpacing(-1)
             .foregroundStyle(theme.ink)
             .fixedSize(horizontal: false, vertical: true)
-            .minimumScaleFactor(0.9)
             .frame(maxWidth: .infinity, alignment: .leading)
     }
 
     private var supporting: some View {
         Text("Atlas learns your story and connects you to work that actually fits.")
-            .font(.system(size: 16, weight: .regular))
-            .lineSpacing(8)
+            .font(.system(size: 17, weight: .regular))
+            .lineSpacing(6)
             .foregroundStyle(theme.inkSecondary)
-            .frame(maxWidth: 300, alignment: .leading)
+            .fixedSize(horizontal: false, vertical: true)
+            .frame(maxWidth: 260, alignment: .leading)
+    }
+
+    private var badge: some View {
+        HStack(spacing: 8) {
+            Image(systemName: "sparkle")
+                .font(.system(size: 12, weight: .semibold))
+                .foregroundStyle(theme.river)
+            Text("No forms. No endless applications. Just forward.")
+                .font(.system(size: 13, weight: .regular))
+                .foregroundStyle(theme.inkSecondary)
+        }
+        .padding(.vertical, 10)
+        .padding(.horizontal, 16)
+        .background(.ultraThinMaterial, in: Capsule())
+        .overlay(Capsule().strokeBorder(theme.hairline, lineWidth: 1))
     }
 
     // MARK: Buttons
@@ -172,46 +177,42 @@ struct WelcomeView: View {
             authButton(.linkedIn, "Continue with LinkedIn")
                 .opacity(appeared ? 1 : 0)
                 .offset(y: rise(appeared ? 0 : 30))
-                .animation(reveal(0.22), value: appeared)
+                .animation(reveal(0.24), value: appeared)
             authButton(.github, "Continue with GitHub")
                 .opacity(appeared ? 1 : 0)
                 .offset(y: rise(appeared ? 0 : 30))
-                .animation(reveal(0.29), value: appeared)
+                .animation(reveal(0.3), value: appeared)
         }
     }
 
-    private func authButton(_ provider: AuthProvider, _ title: String) -> some View {
+    private func authButton(_ mark: BrandMark, _ title: String) -> some View {
         Button {
-            signIn(provider)
+            signIn(mark == .linkedIn ? .linkedIn : .github)
         } label: {
-            HStack(spacing: 12) {
-                authMark(provider)
-                Text(title).font(.system(size: 17, weight: .semibold))
+            HStack(spacing: 14) {
+                BrandMarkView(mark: mark, size: 26, monoColor: theme.ink)
+                Text(title).font(.system(size: 16, weight: .medium))
+                Spacer(minLength: 8)
+                Image(systemName: "arrow.right")
+                    .font(.system(size: 16, weight: .regular))
+                    .foregroundStyle(theme.ink.opacity(0.55))
             }
         }
         .buttonStyle(GlassAuthButtonStyle(ink: theme.ink, hairline: theme.hairline))
         .disabled(auth.isAuthenticating)
     }
 
-    @ViewBuilder private func authMark(_ provider: AuthProvider) -> some View {
-        Group {
-            switch provider {
-            case .linkedIn: Text("in").font(.system(size: 17, weight: .heavy))
-            case .github:
-                Image(systemName: "chevron.left.forwardslash.chevron.right")
-                    .font(.system(size: 15, weight: .semibold))
-            }
-        }
-        .foregroundStyle(theme.ink)
-        .frame(width: 22, height: 22)
-    }
-
     // MARK: Footer
 
     private var footer: some View {
-        Text("We only read what you approve.")
-            .font(.system(size: 13, weight: .regular))
-            .foregroundStyle(theme.inkTertiary)
+        HStack(spacing: 6) {
+            Image(systemName: "lock")
+                .font(.system(size: 11, weight: .regular))
+            Text("We only read what you approve.")
+                .font(.system(size: 13, weight: .regular))
+        }
+        .foregroundStyle(theme.inkTertiary)
+        .frame(maxWidth: .infinity, alignment: .center)
     }
 
     // MARK: Behaviour
@@ -223,10 +224,8 @@ struct WelcomeView: View {
         }
     }
 
-    /// Vertical rise offset for entrance — flattened under Reduce Motion.
     private func rise(_ y: CGFloat) -> CGFloat { reduce ? 0 : y }
 
-    /// Staggered spring reveal (a quick fade under Reduce Motion).
     private func reveal(_ delay: Double) -> Animation {
         reduce ? .easeOut(duration: 0.25).delay(delay)
                : .spring(response: 0.62, dampingFraction: 0.86).delay(delay)
@@ -235,14 +234,14 @@ struct WelcomeView: View {
 
 // MARK: - Theme
 
-/// A self-contained light/dark palette for the Welcome screen. The rest of the
-/// app stays light in the prototype; this drives the on-screen theme toggle.
+/// Self-contained light/dark palette for the Welcome screen (the rest of the app
+/// stays light in the prototype; this drives the on-screen theme toggle).
 private struct WelcomeTheme {
     let isDark: Bool
 
     var paper: Color { isDark ? Color(hex: "1A1915") : Color(hex: "FCFBF8") }
     var ink: Color { isDark ? Color(hex: "F7F6F1") : Color(hex: "0C0C0D") }
-    var inkSecondary: Color { isDark ? Color(hex: "AEACA4") : Color(hex: "6E6E73") }
+    var inkSecondary: Color { isDark ? Color(hex: "AEACA4") : Color(hex: "5B5B60") }
     var inkTertiary: Color { isDark ? Color(hex: "78766E") : Color(hex: "9A9A9F") }
     var hairline: Color { isDark ? Color.white.opacity(0.14) : Color(hex: "E7E5E0") }
     var river: Color { Color(hex: "7A8FFF") }
@@ -251,9 +250,8 @@ private struct WelcomeTheme {
 
 // MARK: - Glass button
 
-/// Glassmorphism sign-in button: 60pt tall, 18pt radius, frosted material with a
-/// top sheen and specular rim, a soft shadow, and a spring press (scale + shadow
-/// deflate). Hover isn't a touch concept — the press is the premium tactile beat.
+/// Glassmorphism sign-in button: 64pt tall, 18pt radius, frosted material with a
+/// top sheen and specular rim, a soft shadow, and a spring press.
 private struct GlassAuthButtonStyle: ButtonStyle {
     let ink: Color
     let hairline: Color
@@ -263,7 +261,8 @@ private struct GlassAuthButtonStyle: ButtonStyle {
         let shape = RoundedRectangle(cornerRadius: 18, style: .continuous)
         configuration.label
             .foregroundStyle(ink)
-            .frame(maxWidth: .infinity, minHeight: 60)
+            .frame(maxWidth: .infinity, minHeight: 64)
+            .padding(.horizontal, 20)
             .background {
                 shape.fill(.ultraThinMaterial)
                     .overlay {
@@ -276,15 +275,15 @@ private struct GlassAuthButtonStyle: ButtonStyle {
             }
             .overlay {
                 shape.strokeBorder(
-                    LinearGradient(colors: [.white.opacity(0.6), hairline],
+                    LinearGradient(colors: [.white.opacity(0.55), hairline],
                                    startPoint: .top, endPoint: .bottom),
                     lineWidth: 1
                 )
             }
             .clipShape(shape)
-            .shadow(color: .black.opacity(pressed ? 0.04 : 0.10),
+            .shadow(color: .black.opacity(pressed ? 0.04 : 0.09),
                     radius: pressed ? 6 : 16, x: 0, y: pressed ? 3 : 9)
-            .scaleEffect(pressed ? 0.975 : 1)
+            .scaleEffect(pressed ? 0.985 : 1)
             .animation(.spring(response: 0.34, dampingFraction: 0.7), value: pressed)
     }
 }
