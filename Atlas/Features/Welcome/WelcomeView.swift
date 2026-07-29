@@ -1,4 +1,5 @@
 import SwiftUI
+import UIKit
 
 /// S01 · Welcome — premium editorial onboarding. Warm ivory with a whisper of a
 /// radial glow; a wordmark + theme toggle; a Find·Join·Belong rail over a
@@ -34,7 +35,7 @@ struct WelcomeView: View {
                 .opacity(appeared ? 1 : 0)
                 .animation(reveal(0.06), value: appeared)
 
-                Spacer().frame(height: 26)
+                Spacer(minLength: 28)
 
                 hero
                     .padding(.horizontal, margin)
@@ -49,16 +50,17 @@ struct WelcomeView: View {
                     .offset(y: rise(appeared ? 0 : 16))
                     .animation(reveal(0.15), value: appeared)
 
+                Spacer(minLength: 28)
+
                 badge
                     .padding(.horizontal, margin)
-                    .padding(.top, 18)
                     .opacity(appeared ? 1 : 0)
                     .offset(y: rise(appeared ? 0 : 16))
                     .animation(reveal(0.2), value: appeared)
 
-                Spacer(minLength: 24)
-
-                buttons.padding(.horizontal, margin)
+                buttons
+                    .padding(.horizontal, margin)
+                    .padding(.top, 16)
 
                 footer
                     .padding(.horizontal, margin)
@@ -82,6 +84,13 @@ struct WelcomeView: View {
                 center: UnitPoint(x: 0.5, y: 0.15),
                 startRadius: 6,
                 endRadius: 560
+            )
+            // A whisper of periwinkle warmth near the illustration.
+            RadialGradient(
+                gradient: Gradient(colors: [WP.river.opacity(0.07), .clear]),
+                center: UnitPoint(x: 0.82, y: 0.24),
+                startRadius: 2,
+                endRadius: 340
             )
         }
     }
@@ -115,7 +124,7 @@ struct WelcomeView: View {
 
     private var hero: some View {
         Text("Your career,\nwithout\nthe chaos.")
-            .font(.system(size: 40, weight: .semibold))
+            .font(Typeface.display(40))
             .tracking(-0.6)
             .lineSpacing(-1)
             .foregroundStyle(WP.ink)
@@ -195,6 +204,7 @@ struct WelcomeView: View {
     // MARK: Behaviour
 
     private func signIn(_ provider: AuthProvider) {
+        UIImpactFeedbackGenerator(style: .soft).impactOccurred(intensity: 0.7)
         Task {
             await auth.signIn(with: provider)
             if auth.isSignedIn { onSignedIn() }
@@ -253,8 +263,11 @@ private struct GlassAuthButtonStyle: ButtonStyle {
                 )
             }
             .clipShape(shape)
-            .shadow(color: .black.opacity(pressed ? 0.04 : 0.09),
-                    radius: pressed ? 6 : 16, x: 0, y: pressed ? 3 : 9)
+            // Layered shadow: a tight ambient contact + a soft key light.
+            .shadow(color: .black.opacity(pressed ? 0.05 : 0.06),
+                    radius: pressed ? 1.5 : 3, x: 0, y: pressed ? 1 : 2)
+            .shadow(color: .black.opacity(pressed ? 0.03 : 0.08),
+                    radius: pressed ? 7 : 20, x: 0, y: pressed ? 4 : 12)
             .scaleEffect(pressed ? 0.985 : 1)
             .animation(.spring(response: 0.34, dampingFraction: 0.7), value: pressed)
     }
