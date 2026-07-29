@@ -115,6 +115,22 @@ extension View {
     }
 }
 
+/// Display typeface with a graceful fallback. Drop a real editorial face (e.g.
+/// General Sans) into `Resources/Fonts/` + register it in project.yml's
+/// `UIAppFonts`, and it activates automatically; until then it renders as SF Pro
+/// at the requested weight — so the layout is identical either way.
+enum Typeface {
+    /// PostScript name of the display face to prefer once installed.
+    static let displayName = "GeneralSans-Semibold"
+
+    static func display(_ size: CGFloat, weight: Font.Weight = .semibold) -> Font {
+        if UIFont(name: displayName, size: size) != nil {
+            return .custom(displayName, size: size)
+        }
+        return .system(size: size, weight: weight)
+    }
+}
+
 // MARK: - Space, radius, elevation
 
 enum Space {
