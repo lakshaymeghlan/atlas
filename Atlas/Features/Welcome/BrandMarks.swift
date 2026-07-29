@@ -1,4 +1,5 @@
 import SwiftUI
+import UIKit
 
 /// Provider brand marks for the sign-in buttons.
 ///
@@ -15,7 +16,22 @@ struct BrandMarkView: View {
     /// Fill for the monochrome (GitHub) mark — ink so it flips on dark.
     var monoColor: Color = .black
 
+    /// Asset name checked first — drop a real logo image set here for a
+    /// pixel-exact mark; otherwise the drawn fallback is used.
+    private var assetName: String { mark == .linkedIn ? "logo-linkedin" : "logo-github" }
+
     var body: some View {
+        if UIImage(named: assetName) != nil {
+            Image(assetName)
+                .resizable()
+                .scaledToFit()
+                .frame(width: size, height: size)
+        } else {
+            drawn
+        }
+    }
+
+    @ViewBuilder private var drawn: some View {
         switch mark {
         case .linkedIn:
             RoundedRectangle(cornerRadius: size * 0.22, style: .continuous)
