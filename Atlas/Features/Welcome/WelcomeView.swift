@@ -26,7 +26,7 @@ struct WelcomeView: View {
                     .opacity(appeared ? 1 : 0)
                     .animation(reveal(0), value: appeared)
 
-                Spacer().frame(height: 64)
+                Spacer().frame(height: 208)
 
                 Text("Your career,\nwithout\nthe chaos.")
                     .font(Typeface.display(44))
@@ -49,15 +49,7 @@ struct WelcomeView: View {
                     .offset(y: rise(appeared ? 0 : 14))
                     .animation(reveal(0.12), value: appeared)
 
-                Spacer(minLength: 36)
-
-                HowItWorks(accent: WP.accent, accentTint: WP.accentTint, chip: WP.chip,
-                           ink: WP.ink, inkTertiary: WP.inkTertiary)
-                    .opacity(appeared ? 1 : 0)
-                    .offset(y: rise(appeared ? 0 : 14))
-                    .animation(reveal(0.16), value: appeared)
-
-                Spacer(minLength: 36)
+                Spacer(minLength: 40)
 
                 VStack(spacing: 12) {
                     authButton(.linkedIn, "Continue with LinkedIn")
@@ -83,37 +75,10 @@ struct WelcomeView: View {
     }
 
     private var background: some View {
-        ZStack {
+        ZStack(alignment: .top) {
             WP.paper
-            RadialGradient(
-                gradient: Gradient(colors: [.white.opacity(0.45), .clear]),
-                center: UnitPoint(x: 0.5, y: 0.12),
-                startRadius: 8, endRadius: 520
-            )
-            ambientGlow
+            SkyBackdrop().ignoresSafeArea(edges: .top)
         }
-    }
-
-    /// A soft periwinkle glow that drifts slowly — a whisper of life, not decoration.
-    @ViewBuilder private var ambientGlow: some View {
-        if reduce {
-            glow(at: UnitPoint(x: 0.7, y: 0.5))
-        } else {
-            TimelineView(.animation) { timeline in
-                let t = timeline.date.timeIntervalSinceReferenceDate
-                let x = 0.55 + 0.16 * sin(t / 11)
-                let y = 0.46 + 0.10 * cos(t / 9)
-                glow(at: UnitPoint(x: x, y: y))
-            }
-        }
-    }
-
-    private func glow(at center: UnitPoint) -> some View {
-        RadialGradient(
-            gradient: Gradient(colors: [WP.accent.opacity(0.09), .clear]),
-            center: center, startRadius: 4, endRadius: 380
-        )
-        .blur(radius: 8)
     }
 
     private func authButton(_ mark: BrandMark, _ title: String) -> some View {
