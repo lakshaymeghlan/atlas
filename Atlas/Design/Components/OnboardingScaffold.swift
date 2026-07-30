@@ -11,7 +11,7 @@ struct OnboardingScaffold<Content: View, Bottom: View>: View {
     var body: some View {
         VStack(spacing: 0) {
             navBar
-            Current(stageTitles: Journey.stageTitles, currentStage: stageIndex)
+            StageProgress(current: stageIndex, count: Journey.stageTitles.count)
                 .padding(.horizontal, Space.screen)
                 .padding(.bottom, Space.l)
 
@@ -30,7 +30,7 @@ struct OnboardingScaffold<Content: View, Bottom: View>: View {
                 .padding(.bottom, Space.screen)
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
-        .background(Palette.paper)
+        .atlasSky(height: 240, intensity: 0.7, maxClouds: 3)
     }
 
     @ViewBuilder private var navBar: some View {
@@ -54,5 +54,26 @@ struct OnboardingScaffold<Content: View, Bottom: View>: View {
 extension OnboardingScaffold where Bottom == EmptyView {
     init(stageIndex: Int, onBack: (() -> Void)? = nil, @ViewBuilder content: @escaping () -> Content) {
         self.init(stageIndex: stageIndex, onBack: onBack, content: content, bottom: { EmptyView() })
+    }
+}
+
+/// Minimal step indicator — a row of thin segments, filled up to the current
+/// stage. Replaces the boat river with something quiet and clean.
+struct StageProgress: View {
+    let current: Int
+    let count: Int
+
+    var body: some View {
+        HStack(spacing: 6) {
+            ForEach(0..<count, id: \.self) { i in
+                Capsule()
+                    .fill(i <= current ? Palette.blue : Palette.border)
+                    .frame(height: 4)
+                    .frame(maxWidth: .infinity)
+            }
+        }
+        .animation(.easeInOut(duration: 0.35), value: current)
+        .accessibilityElement()
+        .accessibilityLabel("Step \(current + 1) of \(count)")
     }
 }

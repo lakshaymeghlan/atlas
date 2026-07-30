@@ -43,7 +43,7 @@ struct HomeView: View {
             .padding(.bottom, Space.screen)
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
-        .background(Palette.paper)
+        .atlasSky(height: 300, intensity: 0.8, maxClouds: 3)
     }
 
     private var summaryCard: some View {
