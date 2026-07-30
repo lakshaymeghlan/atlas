@@ -21,7 +21,7 @@ extension Color {
 /// The full Atlas palette. These are the only colours in the app.
 enum Palette {
     // Surface
-    static let paper = Color(hex: "F5F4F0")
+    static let paper = Color(hex: "FCFBF8")
     static let card = Color(hex: "FFFFFF")
     static let border = Color(hex: "E7E5E0")
     static let chip = Color(hex: "F0EEE9")
