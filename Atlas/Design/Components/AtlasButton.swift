@@ -2,9 +2,9 @@ import SwiftUI
 
 enum AtlasButtonKind { case primary, secondary }
 
-/// The two button shapes in Atlas. Primary is the only filled (blue) button in
-/// the app; secondary is card-fill with a hairline border. Both share geometry:
-/// full width, 56pt min height, 16pt radius.
+/// The two button shapes in Atlas. Primary is a solid ink fill; secondary is
+/// white with a hairline border (the same family as the sign-in buttons). Both
+/// share geometry: full width, 56pt min height, 16pt radius.
 struct AtlasButton<Leading: View>: View {
     let title: String
     var kind: AtlasButtonKind = .primary
@@ -38,24 +38,38 @@ private struct AtlasButtonStyle: ButtonStyle {
 
     func makeBody(configuration: Configuration) -> some View {
         let pressed = configuration.isPressed
-        let label = configuration.label
-            .foregroundStyle(kind == .primary ? Color.white : Palette.ink)
+        let shape = RoundedRectangle(cornerRadius: Radius.button, style: .continuous)
+        return configuration.label
+            .foregroundStyle(labelColor)
             .frame(maxWidth: .infinity, minHeight: 56)
             .padding(.horizontal, Space.l)
-
-        return glass(label, pressed: pressed)
-            .opacity(isEnabled ? 1 : 0.4)
+            .background(shape.fill(fill(pressed: pressed)))
+            .overlay(kind == .secondary ? shape.strokeBorder(Palette.border, lineWidth: 1) : nil)
+            .clipShape(shape)
+            .shadow(color: shadowColor, radius: pressed ? 5 : 13, x: 0, y: pressed ? 2 : 6)
             .scaleEffect(pressed ? 0.985 : 1)
-            .animation(.easeOut(duration: Motion.tap), value: pressed)
+            .animation(.spring(response: 0.32, dampingFraction: 0.72), value: pressed)
     }
 
-    @ViewBuilder private func glass(_ label: some View, pressed: Bool) -> some View {
+    // Primary = solid ink; secondary = white with a hairline. One clean family.
+    private var labelColor: Color {
+        guard isEnabled else { return Palette.inkTertiary }
+        return kind == .primary ? .white : Palette.ink
+    }
+
+    private func fill(pressed: Bool) -> Color {
         switch kind {
         case .primary:
-            label.tintedGlass(Radius.button, fill: pressed ? Palette.bluePressed : Palette.blue)
+            if !isEnabled { return Palette.border }
+            return pressed ? Color(hex: "2A2A2E") : Palette.ink
         case .secondary:
-            label.glassSurface(Radius.button, tint: pressed ? Palette.chip.opacity(0.7) : .white.opacity(0.4))
+            return pressed ? Palette.chip : .white
         }
+    }
+
+    private var shadowColor: Color {
+        guard isEnabled else { return .clear }
+        return kind == .primary ? Palette.ink.opacity(0.18) : .black.opacity(0.05)
     }
 }
 

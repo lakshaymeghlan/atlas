@@ -6,6 +6,10 @@ import SwiftUI
 /// Reduce Motion → still.
 struct SkyBackdrop: View {
     var height: CGFloat = 440
+    /// Scales the whole sky down for inner screens (0…1).
+    var intensity: CGFloat = 1
+    /// How many clouds to draw (inner screens use fewer).
+    var maxClouds: Int = 4
 
     // (yFraction, scale, seconds per screen, phase 0…1, opacity)
     private let clouds: [(CGFloat, CGFloat, Double, CGFloat, CGFloat)] = [
@@ -50,12 +54,13 @@ struct SkyBackdrop: View {
         let rect = Path(CGRect(origin: .zero, size: size))
         let sunCenter = CGPoint(x: size.width * 0.72, y: size.height * 0.30)
 
+        let k = intensity
         // Warm sky wash from the top — gives the clouds something to sit against.
         ctx.fill(
             rect,
             with: .linearGradient(
-                Gradient(colors: [Color(hex: "FFDCB4").opacity(0.6),
-                                  Color(hex: "FFE8CE").opacity(0.24), .clear]),
+                Gradient(colors: [Color(hex: "FFDCB4").opacity(0.6 * k),
+                                  Color(hex: "FFE8CE").opacity(0.24 * k), .clear]),
                 startPoint: CGPoint(x: size.width / 2, y: 0),
                 endPoint: CGPoint(x: size.width / 2, y: size.height * 0.82)
             )
@@ -64,28 +69,28 @@ struct SkyBackdrop: View {
         ctx.fill(
             rect,
             with: .radialGradient(
-                Gradient(colors: [sun.opacity(0.62), sun.opacity(0.24), .clear]),
+                Gradient(colors: [sun.opacity(0.62 * k), sun.opacity(0.24 * k), .clear]),
                 center: sunCenter, startRadius: 4, endRadius: size.height * 0.85
             )
         )
         // A soft sun disc with a brighter core.
         ctx.drawLayer { layer in
             layer.addFilter(.blur(radius: 8))
-            layer.fill(disc(sunCenter, 32), with: .color(sunCore.opacity(0.9)))
-            layer.fill(disc(sunCenter, 17), with: .color(.white.opacity(0.55)))
+            layer.fill(disc(sunCenter, 32), with: .color(sunCore.opacity(0.9 * k)))
+            layer.fill(disc(sunCenter, 17), with: .color(.white.opacity(0.55 * k)))
         }
 
         // Gentle clouds — softly blurred so they read as clouds, not blobs.
         ctx.drawLayer { layer in
             layer.addFilter(.blur(radius: 7))
-            for (yFrac, scale, period, phase, op) in clouds {
+            for (yFrac, scale, period, phase, op) in clouds.prefix(maxClouds) {
                 let margin = scale * 3
                 let span = Double(size.width + margin * 2)
                 let base = Double(phase) * span
                 let offset = animate ? (t / period * span + base) : base
                 let x = -Double(margin) + offset.truncatingRemainder(dividingBy: span)
                 cloud(&layer, at: CGPoint(x: CGFloat(x), y: size.height * yFrac),
-                      scale: scale, opacity: op)
+                      scale: scale, opacity: op * k)
             }
         }
     }
@@ -105,6 +110,20 @@ struct SkyBackdrop: View {
 
     private func disc(_ p: CGPoint, _ r: CGFloat) -> Path {
         Path(ellipseIn: CGRect(x: p.x - r, y: p.y - r, width: r * 2, height: r * 2))
+    }
+}
+
+extension View {
+    /// Ivory background with the warm sky at the top — the shared Atlas surface.
+    func atlasSky(height: CGFloat = 440, intensity: CGFloat = 1, maxClouds: Int = 4) -> some View {
+        background(
+            ZStack(alignment: .top) {
+                Palette.paper
+                SkyBackdrop(height: height, intensity: intensity, maxClouds: maxClouds)
+                    .ignoresSafeArea(edges: .top)
+            }
+            .ignoresSafeArea()
+        )
     }
 }
 
