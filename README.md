@@ -14,7 +14,7 @@ no backend yet. Sign-in is stubbed and CV parsing is mocked (see
   build a SwiftUI app.
 - [XcodeGen](https://github.com/yonyz/XcodeGen): `brew install xcodegen`
 
-## Run
+## Run 
 
 ```sh
 xcodegen generate      # writes Atlas.xcodeproj from project.yml
