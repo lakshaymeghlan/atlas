@@ -1,24 +1,20 @@
 import SwiftUI
 import UIKit
 
-/// A match card that flips in 3D on tap: front shows the role + fit + actions,
-/// back shows everything about the company. Pass / Accept live on the front.
+/// A big, solid match card that flips in 3D on tap. Front shows the role, fit and
+/// skills with a bookmark to save; back shows everything about the company. The
+/// flip swaps faces at the 90° edge so the card is never transparent mid-turn.
 struct JobCardView: View {
     let match: JobMatch
-    var onPass: () -> Void
-    var onAccept: () -> Void
-
-    @State private var flipped = false
-    private let faceHeight: CGFloat = 250
+    @Binding var flipped: Bool
+    var isSaved: Bool
+    var onToggleSave: () -> Void
 
     var body: some View {
         ZStack {
-            front.opacity(flipped ? 0 : 1)
-            back
-                .opacity(flipped ? 1 : 0)
-                .rotation3DEffect(.degrees(180), axis: (x: 0, y: 1, z: 0))
+            front.modifier(FlipFace(angle: flipped ? 180 : 0, back: false))
+            back.modifier(FlipFace(angle: flipped ? 180 : 0, back: true))
         }
-        .rotation3DEffect(.degrees(flipped ? 180 : 0), axis: (x: 0, y: 1, z: 0), perspective: 0.4)
         .animation(.spring(response: 0.55, dampingFraction: 0.82), value: flipped)
     }
 
@@ -30,121 +26,157 @@ struct JobCardView: View {
     // MARK: Front
 
     private var front: some View {
-        VStack(alignment: .leading, spacing: 0) {
-            // Tapping the info area flips the card; buttons keep their own taps.
-            VStack(alignment: .leading, spacing: Space.m) {
-                HStack(alignment: .top, spacing: Space.m) {
-                    companyWell
-                    VStack(alignment: .leading, spacing: 2) {
-                        Text(match.role).atlasText(.bodyStrong).foregroundStyle(Palette.ink)
-                        Text("\(match.company) · \(match.location)")
-                            .atlasText(.caption).foregroundStyle(Palette.inkSecondary)
-                    }
-                    Spacer(minLength: Space.s)
-                    matchBadge
-                }
-                if !match.tags.isEmpty {
-                    FlowLayout(spacing: Space.s) {
-                        ForEach(match.tags, id: \.self) { ChipView(text: $0) }
-                    }
-                }
-                if let salary = match.salary {
-                    HStack(spacing: 5) {
-                        Image(systemName: "banknote").font(.system(size: 12))
-                        Text(salary).atlasText(.caption)
-                    }
-                    .foregroundStyle(Palette.inkTertiary)
-                }
-                HStack(spacing: 5) {
-                    Text("Tap for company").atlasText(.meta)
-                    Image(systemName: "arrow.right").font(.system(size: 9, weight: .semibold))
-                }
-                .foregroundStyle(Palette.inkTertiary)
+        VStack(alignment: .leading, spacing: Space.l) {
+            HStack(alignment: .top, spacing: Space.m) {
+                companyWell(56)
+                Spacer(minLength: Space.s)
+                matchBadge
+                saveButton
             }
-            .frame(maxWidth: .infinity, alignment: .leading)
-            .contentShape(Rectangle())
-            .onTapGesture { flip() }
+
+            Spacer(minLength: Space.l)
+
+            VStack(alignment: .leading, spacing: Space.s) {
+                Text(match.role)
+                    .font(.system(size: 32, weight: .bold))
+                    .foregroundStyle(Palette.ink)
+                    .fixedSize(horizontal: false, vertical: true)
+                Text("\(match.company) · \(match.location)")
+                    .atlasText(.body).foregroundStyle(Palette.inkSecondary)
+            }
+
+            FlowLayout(spacing: Space.s) {
+                ForEach(match.tags, id: \.self) { ChipView(text: $0) }
+            }
+
+            if let salary = match.salary {
+                HStack(spacing: 6) {
+                    Image(systemName: "banknote").font(.system(size: 13))
+                    Text(salary).atlasText(.body)
+                }
+                .foregroundStyle(Palette.inkSecondary)
+            }
 
             Spacer(minLength: Space.m)
 
-            HStack(spacing: Space.m) {
-                AtlasButton("Pass", kind: .secondary) { onPass() }
-                AtlasButton("Accept") { onAccept() }
+            HStack(spacing: 5) {
+                Text("Tap to see \(match.company)").atlasText(.meta)
+                Image(systemName: "arrow.right").font(.system(size: 9, weight: .semibold))
             }
+            .foregroundStyle(Palette.inkTertiary)
         }
-        .frame(height: faceHeight, alignment: .top)
-        .cardSurface()
+        .cardFace(onTap: flip)
     }
 
     // MARK: Back
 
     private var back: some View {
-        VStack(alignment: .leading, spacing: Space.m) {
+        VStack(alignment: .leading, spacing: Space.l) {
             HStack(alignment: .top, spacing: Space.m) {
-                companyWell
-                VStack(alignment: .leading, spacing: 2) {
+                companyWell(56)
+                VStack(alignment: .leading, spacing: 3) {
                     Text(match.company).atlasText(.title).foregroundStyle(Palette.ink)
                     Text("\(match.industry) · \(match.size) · \(match.stage)")
                         .atlasText(.caption).foregroundStyle(Palette.inkSecondary)
                 }
                 Spacer(minLength: Space.s)
                 Image(systemName: "arrow.uturn.backward")
-                    .font(.system(size: 14, weight: .semibold))
+                    .font(.system(size: 15, weight: .semibold))
                     .foregroundStyle(Palette.inkTertiary)
             }
 
             Text(match.about)
-                .atlasText(.caption).foregroundStyle(Palette.inkSecondary)
+                .atlasText(.body).foregroundStyle(Palette.inkSecondary)
                 .fixedSize(horizontal: false, vertical: true)
 
-            VStack(alignment: .leading, spacing: 6) {
+            VStack(alignment: .leading, spacing: Space.s) {
                 Eyebrow("WHY IT FITS")
-                ForEach(match.reasons.prefix(3), id: \.self) { reason in
+                ForEach(match.reasons, id: \.self) { reason in
                     HStack(alignment: .top, spacing: Space.s) {
                         Image(systemName: "checkmark.circle.fill")
-                            .font(.system(size: 12)).foregroundStyle(Palette.blue)
+                            .font(.system(size: 14)).foregroundStyle(Palette.blue)
                             .padding(.top, 1)
-                        Text(reason).atlasText(.caption).foregroundStyle(Palette.ink)
+                        Text(reason).atlasText(.body).foregroundStyle(Palette.ink)
                     }
                 }
             }
 
             Spacer(minLength: 0)
+
+            HStack(spacing: 5) {
+                Image(systemName: "arrow.uturn.backward").font(.system(size: 9, weight: .semibold))
+                Text("Tap to flip back").atlasText(.meta)
+            }
+            .foregroundStyle(Palette.inkTertiary)
         }
-        .frame(height: faceHeight, alignment: .top)
-        .contentShape(Rectangle())
-        .onTapGesture { flip() }
-        .cardSurface()
+        .cardFace(onTap: flip)
     }
 
     // MARK: Bits
 
-    private var companyWell: some View {
-        RoundedRectangle(cornerRadius: Radius.chip, style: .continuous)
+    private func companyWell(_ size: CGFloat) -> some View {
+        RoundedRectangle(cornerRadius: Radius.card, style: .continuous)
             .fill(Palette.blueTint)
-            .frame(width: 40, height: 40)
+            .frame(width: size, height: size)
             .overlay(
                 Text(String(match.company.prefix(1)))
-                    .font(.system(size: 17, weight: .semibold))
+                    .font(.system(size: size * 0.42, weight: .semibold))
                     .foregroundStyle(Palette.blue)
             )
     }
 
     private var matchBadge: some View {
         Text("\(match.match)% match")
-            .font(.system(size: 11, weight: .semibold))
+            .font(.system(size: 12, weight: .semibold))
             .foregroundStyle(Palette.blue)
-            .padding(.vertical, 5)
-            .padding(.horizontal, 9)
+            .padding(.vertical, 6)
+            .padding(.horizontal, 11)
             .background(Capsule().fill(Palette.blueTint))
+    }
+
+    private var saveButton: some View {
+        Button(action: onToggleSave) {
+            Image(systemName: isSaved ? "bookmark.fill" : "bookmark")
+                .font(.system(size: 16, weight: .medium))
+                .foregroundStyle(isSaved ? Palette.blue : Palette.inkSecondary)
+                .frame(width: 40, height: 40)
+                .background(Circle().fill(isSaved ? Palette.blueTint : Palette.chip))
+        }
+        .accessibilityLabel(isSaved ? "Saved" : "Save job")
+    }
+}
+
+/// Animatable flip: rotates the face and shows it only on its own half of the
+/// turn, so exactly one opaque face is visible at a time.
+private struct FlipFace: ViewModifier, Animatable {
+    var angle: Double
+    let back: Bool
+
+    var animatableData: Double {
+        get { angle }
+        set { angle = newValue }
+    }
+
+    func body(content: Content) -> some View {
+        let visible = back ? angle >= 90 : angle < 90
+        return content
+            .opacity(visible ? 1 : 0)
+            .rotation3DEffect(.degrees(back ? angle - 180 : angle),
+                              axis: (x: 0, y: 1, z: 0), perspective: 0.35)
     }
 }
 
 private extension View {
-    /// The card face surface — padded frosted glass, matching AtlasCard.
-    func cardSurface() -> some View {
-        padding(Space.l)
-            .frame(maxWidth: .infinity, alignment: .leading)
-            .glassSurface(Radius.card, tint: .white.opacity(0.55))
+    /// A full-bleed, solid (opaque) card face.
+    func cardFace(onTap: @escaping () -> Void) -> some View {
+        let shape = RoundedRectangle(cornerRadius: Radius.sheet, style: .continuous)
+        return padding(Space.screen)
+            .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
+            .background(shape.fill(.white))
+            .overlay(shape.strokeBorder(Palette.border.opacity(0.7), lineWidth: 1))
+            .clipShape(shape)
+            .shadow(color: Palette.ink.opacity(0.07), radius: 18, x: 0, y: 10)
+            .contentShape(shape)
+            .onTapGesture(perform: onTap)
     }
 }

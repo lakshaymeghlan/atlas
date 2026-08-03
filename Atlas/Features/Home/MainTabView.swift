@@ -79,29 +79,81 @@ private struct BottomBar: View {
     }
 }
 
-/// Saved tab — empty state for now (saving lands with the matching engine).
+/// Saved tab — the roles you bookmarked from the Jobs deck.
 struct SavedView: View {
+    @Environment(JobsStore.self) private var jobs
+
     var body: some View {
-        VStack(spacing: Space.l) {
-            Spacer()
+        Group {
+            if jobs.saved.isEmpty {
+                emptyState
+            } else {
+                ScrollView {
+                    VStack(alignment: .leading, spacing: Space.l) {
+                        HStack {
+                            Eyebrow("SAVED")
+                            Spacer()
+                            Text("\(jobs.saved.count) saved").atlasText(.meta).foregroundStyle(Palette.inkTertiary)
+                        }
+                        ForEach(jobs.saved) { match in savedCard(match) }
+                    }
+                    .padding(.horizontal, Space.screen)
+                    .padding(.top, Space.block)
+                    .padding(.bottom, Space.block)
+                }
+            }
+        }
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
+        .atlasSky(height: 260, intensity: 0.75, maxClouds: 3)
+    }
+
+    private func savedCard(_ match: JobMatch) -> some View {
+        AtlasCard(padding: Space.l) {
+            VStack(alignment: .leading, spacing: Space.m) {
+                HStack(alignment: .top, spacing: Space.m) {
+                    RoundedRectangle(cornerRadius: Radius.chip, style: .continuous)
+                        .fill(Palette.blueTint)
+                        .frame(width: 40, height: 40)
+                        .overlay(Text(String(match.company.prefix(1)))
+                            .font(.system(size: 17, weight: .semibold)).foregroundStyle(Palette.blue))
+                    VStack(alignment: .leading, spacing: 2) {
+                        Text(match.role).atlasText(.bodyStrong).foregroundStyle(Palette.ink)
+                        Text("\(match.company) · \(match.location)")
+                            .atlasText(.caption).foregroundStyle(Palette.inkSecondary)
+                    }
+                    Spacer(minLength: Space.s)
+                    Button {
+                        withAnimation(.spring(response: 0.35, dampingFraction: 0.8)) { jobs.toggleSave(match) }
+                    } label: {
+                        Image(systemName: "bookmark.fill")
+                            .font(.system(size: 15)).foregroundStyle(Palette.blue)
+                            .frame(width: 40, height: 40)
+                    }
+                    .accessibilityLabel("Remove from saved")
+                }
+                if let salary = match.salary {
+                    Text("\(match.match)% match · \(salary)")
+                        .atlasText(.caption).foregroundStyle(Palette.inkTertiary)
+                }
+            }
+        }
+    }
+
+    private var emptyState: some View {
+        VStack(spacing: Space.m) {
             Image(systemName: "bookmark")
                 .font(.system(size: 34, weight: .light))
                 .foregroundStyle(Palette.inkTertiary)
-            VStack(spacing: Space.s) {
-                Text("Nothing saved yet")
-                    .atlasText(.title).foregroundStyle(Palette.ink)
-                Text("When Atlas surfaces roles that fit, save the ones you love and they'll live here.")
-                    .atlasText(.body)
-                    .foregroundStyle(Palette.inkSecondary)
-                    .multilineTextAlignment(.center)
-                    .frame(maxWidth: 300)
-            }
-            Spacer()
-            Spacer()
+            Text("Nothing saved yet")
+                .atlasText(.title).foregroundStyle(Palette.ink)
+            Text("Tap the bookmark on a role in Jobs to keep it here for later.")
+                .atlasText(.body)
+                .foregroundStyle(Palette.inkSecondary)
+                .multilineTextAlignment(.center)
+                .frame(maxWidth: 300)
         }
         .padding(.horizontal, Space.screen)
         .frame(maxWidth: .infinity, maxHeight: .infinity)
-        .atlasSky(height: 300, intensity: 0.8, maxClouds: 3)
     }
 }
 

@@ -1,39 +1,31 @@
 import SwiftUI
 import UIKit
 
-/// Jobs tab — the match queue. Each role is a flip card (tap to see the company);
-/// Pass drops it, Accept opens an optional note to the company.
+/// Jobs tab — a one-at-a-time card deck. The top role fills the section; Pass or
+/// Accept (buttons or swipe) advances to the next. Tap a card to flip it and see
+/// the company; bookmark to save it to the Saved tab. When the deck empties, a
+/// calm message explains that more roles arrive as Atlas learns your profile.
 struct JobsView: View {
     @Environment(JobsStore.self) private var jobs
+
     @State private var accepting: JobMatch?
+    @State private var drag: CGSize = .zero
+    @State private var flipped = false
+    @State private var busy = false
 
     var body: some View {
-        ScrollView {
-            VStack(alignment: .leading, spacing: Space.l) {
-                header
-                if jobs.matches.isEmpty {
-                    caughtUp
-                } else {
-                    ForEach(jobs.matches) { match in
-                        JobCardView(
-                            match: match,
-                            onPass: { withAnimation(.spring(response: 0.4, dampingFraction: 0.85)) { jobs.reject(match.id) } },
-                            onAccept: {
-                                let m = match
-                                withAnimation(.spring(response: 0.4, dampingFraction: 0.85)) { jobs.accept(match.id, note: nil) }
-                                accepting = m
-                            }
-                        )
-                        .transition(.move(edge: .trailing).combined(with: .opacity))
-                    }
-                }
+        VStack(spacing: 0) {
+            header
+
+            if jobs.matches.isEmpty {
+                Spacer(); endState; Spacer()
+            } else {
+                deck.padding(.horizontal, Space.screen)
+                buttons.padding(.top, Space.l).padding(.bottom, Space.s)
             }
-            .padding(.horizontal, Space.screen)
-            .padding(.top, Space.block)
-            .padding(.bottom, Space.block)
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
-        .atlasSky(height: 280, intensity: 0.8, maxClouds: 3)
+        .atlasSky(height: 260, intensity: 0.75, maxClouds: 3)
         .sheet(item: $accepting) { match in
             AcceptSheet(match: match) { _ in
                 UINotificationFeedbackGenerator().notificationOccurred(.success)
@@ -42,34 +34,136 @@ struct JobsView: View {
     }
 
     private var header: some View {
-        VStack(alignment: .leading, spacing: Space.s) {
+        HStack {
             Eyebrow("JOBS")
-            Text("Roles that\nfit you.")
-                .atlasText(.display)
-                .foregroundStyle(Palette.ink)
-                .fixedSize(horizontal: false, vertical: true)
+            Spacer()
             if !jobs.matches.isEmpty {
-                Text("\(jobs.matches.count) fresh matches, ranked by fit.")
-                    .atlasText(.body).foregroundStyle(Palette.inkSecondary)
+                Text("\(jobs.matches.count) to review").atlasText(.meta).foregroundStyle(Palette.inkTertiary)
             }
         }
-        .padding(.bottom, Space.s)
+        .padding(.horizontal, Space.screen)
+        .padding(.top, Space.m)
+        .padding(.bottom, Space.m)
     }
 
-    private var caughtUp: some View {
+    // MARK: Deck
+
+    private var deck: some View {
+        ZStack {
+            ForEach(Array(jobs.matches.prefix(2).enumerated()), id: \.element.id) { index, match in
+                let isTop = index == 0
+                JobCardView(
+                    match: match,
+                    flipped: isTop ? $flipped : .constant(false),
+                    isSaved: jobs.isSaved(match.id),
+                    onToggleSave: { withAnimation(.spring(response: 0.35, dampingFraction: 0.7)) { jobs.toggleSave(match) } }
+                )
+                .overlay { if isTop { stamps } }
+                .scaleEffect(isTop ? 1 : 0.93)
+                .offset(y: isTop ? 0 : 18)
+                .offset(x: isTop ? drag.width : 0, y: isTop ? drag.height * 0.15 : 0)
+                .rotationEffect(.degrees(isTop ? Double(drag.width / 18) : 0), anchor: .bottom)
+                .opacity(isTop ? 1 : 0.55)
+                .allowsHitTesting(isTop)
+                .gesture(dragGesture)
+                .zIndex(isTop ? 2 : 1)
+            }
+        }
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
+    }
+
+    private var stamps: some View {
+        ZStack {
+            stamp("PASS", color: Palette.error, angle: -14)
+                .opacity(Double(max(0, -drag.width) / 90))
+                .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topTrailing)
+            stamp("ACCEPT", color: Palette.success, angle: 14)
+                .opacity(Double(max(0, drag.width) / 90))
+                .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
+        }
+        .padding(Space.block)
+        .allowsHitTesting(false)
+    }
+
+    private func stamp(_ text: String, color: Color, angle: Double) -> some View {
+        Text(text)
+            .font(.system(size: 22, weight: .heavy)).tracking(1)
+            .foregroundStyle(color)
+            .padding(.vertical, 6).padding(.horizontal, 12)
+            .overlay(RoundedRectangle(cornerRadius: 10).strokeBorder(color, lineWidth: 3))
+            .rotationEffect(.degrees(angle))
+    }
+
+    private var dragGesture: some Gesture {
+        DragGesture()
+            .onChanged { value in if !busy { drag = value.translation } }
+            .onEnded { value in
+                guard !busy else { return }
+                if value.translation.width < -110 { swipe(pass: true) }
+                else if value.translation.width > 110 { swipe(pass: false) }
+                else { withAnimation(.spring(response: 0.35, dampingFraction: 0.7)) { drag = .zero } }
+            }
+    }
+
+    private func swipe(pass: Bool) {
+        guard !busy, let top = jobs.matches.first else { return }
+        busy = true
+        UIImpactFeedbackGenerator(style: .medium).impactOccurred()
+        withAnimation(.easeIn(duration: 0.3)) {
+            drag = CGSize(width: pass ? -760 : 760, height: drag.height)
+        }
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
+            if pass { jobs.reject(top.id) } else { jobs.accept(top.id, note: nil); accepting = top }
+            drag = .zero
+            flipped = false
+            busy = false
+        }
+    }
+
+    // MARK: Buttons
+
+    private var buttons: some View {
+        HStack(spacing: 40) {
+            deckButton(icon: "xmark", label: "Pass", filled: false) { swipe(pass: true) }
+            deckButton(icon: "checkmark", label: "Accept", filled: true) { swipe(pass: false) }
+        }
+        .disabled(busy)
+        .frame(maxWidth: .infinity)
+    }
+
+    private func deckButton(icon: String, label: String, filled: Bool, action: @escaping () -> Void) -> some View {
+        VStack(spacing: 7) {
+            Button(action: action) {
+                Image(systemName: icon)
+                    .font(.system(size: 23, weight: .semibold))
+                    .foregroundStyle(filled ? .white : Palette.ink)
+                    .frame(width: 66, height: 66)
+                    .background(Circle().fill(filled ? Palette.ink : .white))
+                    .overlay(Circle().strokeBorder(Palette.border, lineWidth: filled ? 0 : 1))
+                    .shadow(color: filled ? Palette.ink.opacity(0.22) : .black.opacity(0.06),
+                            radius: 14, x: 0, y: 7)
+            }
+            .buttonStyle(.plain)
+            Text(label).atlasText(.meta).foregroundStyle(Palette.inkTertiary)
+        }
+        .accessibilityLabel(label)
+    }
+
+    // MARK: End state
+
+    private var endState: some View {
         VStack(spacing: Space.m) {
-            Image(systemName: "checkmark.circle")
+            Image(systemName: "sparkles")
                 .font(.system(size: 34, weight: .light))
-                .foregroundStyle(Palette.inkTertiary)
-            Text("You're all caught up")
+                .foregroundStyle(Palette.blue)
+            Text("That's everyone for now.")
                 .atlasText(.title).foregroundStyle(Palette.ink)
-            Text("New matches arrive as Atlas learns more about what you want. Check back soon.")
+            Text("Atlas keeps learning your profile. The moment new roles that fit open up, they'll appear here — and we'll let you know.")
                 .atlasText(.body).foregroundStyle(Palette.inkSecondary)
                 .multilineTextAlignment(.center)
                 .frame(maxWidth: 300)
         }
-        .frame(maxWidth: .infinity)
-        .padding(.top, 80)
+        .padding(.horizontal, Space.screen)
     }
 }
 

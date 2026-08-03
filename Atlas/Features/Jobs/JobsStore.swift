@@ -8,8 +8,20 @@ import os
 @Observable
 final class JobsStore {
     var matches: [JobMatch] = JobMatch.samples
+    /// Bookmarked roles — independent of pass/accept, shown on the Saved tab.
+    var saved: [JobMatch] = []
 
     private let log = Logger(subsystem: "ai.sofsuite.atlas", category: "jobs")
+
+    func isSaved(_ id: UUID) -> Bool { saved.contains { $0.id == id } }
+
+    func toggleSave(_ match: JobMatch) {
+        if let i = saved.firstIndex(where: { $0.id == match.id }) {
+            saved.remove(at: i)
+        } else {
+            saved.append(match)
+        }
+    }
 
     func reject(_ id: UUID) {
         matches.removeAll { $0.id == id }
