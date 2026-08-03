@@ -5,14 +5,17 @@ import SwiftUI
 /// pinnable projects, and the usual experience/education/skills. Shares the warm
 /// sky + ivory surface so it blends with the rest of the app.
 struct ProfileView: View {
-    var onClose: () -> Void
+    /// Present a back button only when pushed/presented (nil in tab mode).
+    var onClose: (() -> Void)? = nil
+    /// Show a sign-out action at the bottom (used in tab mode).
+    var onSignOut: (() -> Void)? = nil
 
     @Environment(ProfileStore.self) private var store
     private var p: UserProfile { store.profile }
 
     var body: some View {
         VStack(spacing: 0) {
-            navBar
+            if onClose != nil { navBar }
             ScrollView {
                 VStack(alignment: .leading, spacing: Space.block) {
                     header
@@ -24,9 +27,19 @@ struct ProfileView: View {
                     if !p.education.isEmpty { educationSection }
                     if !p.skills.isEmpty { skillsSection }
                     if !p.languages.isEmpty { languagesSection }
+
+                    if let onSignOut {
+                        Button(action: onSignOut) {
+                            Text("Sign out")
+                                .font(.system(size: 15, weight: .semibold))
+                                .foregroundStyle(Palette.inkSecondary)
+                                .frame(maxWidth: .infinity, minHeight: 44)
+                        }
+                        .padding(.top, Space.s)
+                    }
                 }
                 .padding(.horizontal, Space.screen)
-                .padding(.top, Space.s)
+                .padding(.top, onClose == nil ? Space.block : Space.s)
                 .padding(.bottom, Space.block)
             }
         }
@@ -37,7 +50,7 @@ struct ProfileView: View {
 
     private var navBar: some View {
         HStack {
-            Button(action: onClose) {
+            Button(action: { onClose?() }) {
                 Image(systemName: "chevron.left")
                     .font(.system(size: 17, weight: .semibold))
                     .foregroundStyle(Palette.ink)
