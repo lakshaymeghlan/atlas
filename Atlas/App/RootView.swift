@@ -34,7 +34,7 @@ struct RootView: View {
         case .confirmProfile:
             ConfirmProfileView(onDone: router.didConfirmProfile)
         case .home:
-            HomeView(onSignOut: router.signOut)
+            MainTabView(onSignOut: router.signOut)
         }
     }
 
