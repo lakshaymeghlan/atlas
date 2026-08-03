@@ -23,8 +23,23 @@ final class ProfileStore {
         var next = profile
         next.apply(result)
         if let email { next.email = email }
+        // Attach the (mocked) GitHub + LinkedIn integrations if not already present.
+        if next.github == nil { next.github = MockIntegrations.github }
+        if next.linkedIn == nil { next.linkedIn = MockIntegrations.linkedIn }
         profile = next
         log.info("Applied parse: \(result.experiences.count) roles, \(result.skills.count) skills")
+    }
+
+    /// Pin / unpin a GitHub project — at most three pinned at a time.
+    func togglePin(_ id: UUID) {
+        guard var gh = profile.github,
+              let i = gh.projects.firstIndex(where: { $0.id == id }) else { return }
+        if gh.projects[i].pinned {
+            gh.projects[i].pinned = false
+        } else if gh.projects.filter({ $0.pinned }).count < 3 {
+            gh.projects[i].pinned = true
+        }
+        profile.github = gh
     }
 
     func completeOnboarding() {
