@@ -7,15 +7,17 @@ struct MainTabView: View {
     var onSignOut: () -> Void
 
     @State private var tab: MainTab = .jobs
+    @State private var jobs = JobsStore()
 
     var body: some View {
         ZStack {
             switch tab {
-            case .jobs: HomeView()
+            case .jobs: JobsView()
             case .saved: SavedView()
             case .profile: ProfileView(onSignOut: onSignOut)
             }
         }
+        .environment(jobs)
         .safeAreaInset(edge: .bottom, spacing: 0) {
             BottomBar(selection: $tab)
         }
