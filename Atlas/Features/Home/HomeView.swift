@@ -1,58 +1,36 @@
 import SwiftUI
 
-/// S06 · Home (stub). What's coming, plus a read-only summary of the profile
-/// they just built. One sign-out text button at the bottom.
+/// Jobs tab. What's coming (the matching engine) plus a quick summary of the
+/// profile Atlas just built. Sign-out lives on the Profile tab now.
 struct HomeView: View {
-    var onSignOut: () -> Void
-
     @Environment(ProfileStore.self) private var store
-    @State private var showProfile = false
 
     private var profile: UserProfile { store.profile }
 
     var body: some View {
-        VStack(spacing: 0) {
-            ScrollView {
-                VStack(alignment: .leading, spacing: Space.block) {
-                    Eyebrow("ATLAS")
+        ScrollView {
+            VStack(alignment: .leading, spacing: Space.block) {
+                Eyebrow("JOBS")
 
-                    VStack(alignment: .leading, spacing: Space.l) {
-                        Text("Your matches are\nbeing prepared.")
-                            .atlasText(.display)
-                            .foregroundStyle(Palette.ink)
-                            .fixedSize(horizontal: false, vertical: true)
-                        Text("We're building the matching engine next. You'll get an email the day it's ready.")
-                            .atlasText(.body)
-                            .foregroundStyle(Palette.inkSecondary)
-                    }
-
-                    summaryCard
-                }
-                .frame(maxWidth: .infinity, alignment: .leading)
-                .padding(.horizontal, Space.screen)
-                .padding(.top, Space.block)
-                .padding(.bottom, Space.block)
-            }
-
-            VStack(spacing: Space.s) {
-                AtlasButton("View your profile") { showProfile = true }
-                Button(action: onSignOut) {
-                    Text("Sign out")
-                        .font(.system(size: 15, weight: .semibold))
+                VStack(alignment: .leading, spacing: Space.l) {
+                    Text("Your matches are\nbeing prepared.")
+                        .atlasText(.display)
+                        .foregroundStyle(Palette.ink)
+                        .fixedSize(horizontal: false, vertical: true)
+                    Text("We're building the matching engine next. You'll get a nudge the day roles that fit you land here.")
+                        .atlasText(.body)
                         .foregroundStyle(Palette.inkSecondary)
-                        .frame(maxWidth: .infinity, minHeight: 44)
                 }
+
+                summaryCard
             }
+            .frame(maxWidth: .infinity, alignment: .leading)
             .padding(.horizontal, Space.screen)
-            .padding(.top, Space.m)
-            .padding(.bottom, Space.screen)
+            .padding(.top, Space.block)
+            .padding(.bottom, Space.block)
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
         .atlasSky(height: 300, intensity: 0.8, maxClouds: 3)
-        .fullScreenCover(isPresented: $showProfile) {
-            ProfileView(onClose: { showProfile = false })
-                .environment(store)
-        }
     }
 
     private var summaryCard: some View {
@@ -101,5 +79,5 @@ struct HomeView: View {
     if let result = try? CVParseResult.decode(MockCVParser.sampleJSON) {
         store.apply(result, email: "you@example.com")
     }
-    return HomeView(onSignOut: {}).environment(store)
+    return HomeView().environment(store)
 }
