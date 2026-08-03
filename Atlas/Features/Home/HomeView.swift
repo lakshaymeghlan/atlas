@@ -6,6 +6,7 @@ struct HomeView: View {
     var onSignOut: () -> Void
 
     @Environment(ProfileStore.self) private var store
+    @State private var showProfile = false
 
     private var profile: UserProfile { store.profile }
 
@@ -33,17 +34,25 @@ struct HomeView: View {
                 .padding(.bottom, Space.block)
             }
 
-            Button(action: onSignOut) {
-                Text("Sign out")
-                    .font(.system(size: 15, weight: .semibold))
-                    .foregroundStyle(Palette.blue)
-                    .frame(maxWidth: .infinity, minHeight: 44)
+            VStack(spacing: Space.s) {
+                AtlasButton("View your profile") { showProfile = true }
+                Button(action: onSignOut) {
+                    Text("Sign out")
+                        .font(.system(size: 15, weight: .semibold))
+                        .foregroundStyle(Palette.inkSecondary)
+                        .frame(maxWidth: .infinity, minHeight: 44)
+                }
             }
             .padding(.horizontal, Space.screen)
+            .padding(.top, Space.m)
             .padding(.bottom, Space.screen)
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
         .atlasSky(height: 300, intensity: 0.8, maxClouds: 3)
+        .fullScreenCover(isPresented: $showProfile) {
+            ProfileView(onClose: { showProfile = false })
+                .environment(store)
+        }
     }
 
     private var summaryCard: some View {
