@@ -103,6 +103,35 @@ struct Language: Identifiable, Codable, Equatable {
     var level: String?
 }
 
+// MARK: - Integrations (GitHub / LinkedIn)
+
+struct GitHubProject: Identifiable, Codable, Equatable {
+    var id = UUID()
+    var name: String
+    var description: String?
+    var language: String?
+    var stars: Int
+    var forks: Int
+    var pinned: Bool = false
+}
+
+struct GitHubData: Codable, Equatable {
+    var username: String
+    var repoCount: Int
+    var contributionsLastYear: Int
+    var followers: Int
+    var projects: [GitHubProject] = []
+
+    var pinnedProjects: [GitHubProject] { projects.filter { $0.pinned } }
+    var totalStars: Int { projects.reduce(0) { $0 + $1.stars } }
+}
+
+struct LinkedInData: Codable, Equatable {
+    var connections: Int
+    var followers: Int
+    var posts: Int
+}
+
 /// Everything the app knows about a person. Persisted as JSON in UserDefaults
 /// (prototype) — the same shape the Supabase tables will hold.
 struct UserProfile: Codable, Equatable {
@@ -115,6 +144,8 @@ struct UserProfile: Codable, Equatable {
     var education: [Education] = []
     var skills: [Skill] = []
     var languages: [Language] = []
+    var github: GitHubData?
+    var linkedIn: LinkedInData?
     var onboardedAt: Date?
 
     var isOnboarded: Bool { onboardedAt != nil }
