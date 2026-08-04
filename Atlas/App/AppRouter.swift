@@ -29,30 +29,36 @@ final class AppRouter {
     nonisolated static func initialState(isSignedIn: Bool, profile: UserProfile) -> JourneyState {
         guard isSignedIn else { return .welcome }
         if profile.isOnboarded { return .home }
-        if profile.hasParsedContent { return .confirmProfile }
-        if profile.careerPath != nil { return .uploadCV }
-        return .careerPath
+        if profile.hasParsedContent {
+            return profile.desiredRoles.isEmpty ? .rolePreferences : .confirmProfile
+        }
+        return .uploadCV
     }
 
     // MARK: Transitions
 
-    func didSignIn() { go(.careerPath) }
-
-    func chooseSeeking() {
-        profile.profile.careerPath = .seeking
+    func didSignIn() {
+        // They signed in with LinkedIn, so LinkedIn is connected from the start.
+        profile.connectLinkedIn()
         go(.uploadCV)
     }
 
-    func didPickCV(_ cv: PickedCV) { go(.analysing(cv: cv)) }
+    func didPickSource(_ source: CVSource) {
+        if case .link(let url) = source { profile.setPortfolioURL(url) }
+        go(.analysing(source: source))
+    }
 
-    func parsingSucceeded() { go(.confirmProfile) }
+    func parsingSucceeded() { go(.rolePreferences) }
 
     /// From the Analysing failure state: build the profile by hand.
-    func enterManualEntry() { go(.confirmProfile) }
+    func enterManualEntry() { go(.rolePreferences) }
+
+    func didChooseRoles(_ roles: [String]) {
+        profile.setDesiredRoles(roles)
+        go(.confirmProfile)
+    }
 
     func retryUpload() { go(.uploadCV) }
-
-    func backToCareerPath() { go(.careerPath) }
 
     func didConfirmProfile() {
         profile.completeOnboarding()

@@ -19,16 +19,29 @@ final class ProfileStore {
     }
 
     /// Merge a CV parse result (from the mock or the real function) into the profile.
+    /// Connectors (GitHub / LinkedIn) are NOT attached here — they're opt-in on
+    /// the profile, so a non-tech person never sees an empty tech widget.
     func apply(_ result: CVParseResult, email: String?) {
         var next = profile
         next.apply(result)
         if let email { next.email = email }
-        // Attach the (mocked) GitHub + LinkedIn integrations if not already present.
-        if next.github == nil { next.github = MockIntegrations.github }
-        if next.linkedIn == nil { next.linkedIn = MockIntegrations.linkedIn }
         profile = next
         log.info("Applied parse: \(result.experiences.count) roles, \(result.skills.count) skills")
     }
+
+    func setDesiredRoles(_ roles: [String]) {
+        profile.desiredRoles = roles
+    }
+
+    func setPortfolioURL(_ url: String?) {
+        profile.portfolioURL = url
+    }
+
+    // Optional, reversible connectors (mocked). Reconnect any time.
+    func connectGitHub() { profile.github = MockIntegrations.github }
+    func disconnectGitHub() { profile.github = nil }
+    func connectLinkedIn() { profile.linkedIn = MockIntegrations.linkedIn }
+    func disconnectLinkedIn() { profile.linkedIn = nil }
 
     /// Pin / unpin a GitHub project — at most three pinned at a time.
     func togglePin(_ id: UUID) {
