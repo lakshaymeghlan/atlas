@@ -22,15 +22,15 @@ struct RootView: View {
             Color.clear
         case .welcome:
             WelcomeView(onSignedIn: router.didSignIn)
-        case .careerPath:
-            CareerPathView(onChooseSeeking: router.chooseSeeking)
         case .uploadCV:
-            UploadCVView(onContinue: router.didPickCV, onBack: router.backToCareerPath)
-        case .analysing(let cv):
-            AnalysingView(cv: cv,
+            UploadCVView(onContinue: router.didPickSource)
+        case .analysing(let source):
+            AnalysingView(source: source,
                           onFinished: router.parsingSucceeded,
                           onRetry: router.retryUpload,
                           onManualEntry: router.enterManualEntry)
+        case .rolePreferences:
+            RolePreferencesView(onContinue: router.didChooseRoles)
         case .confirmProfile:
             ConfirmProfileView(onDone: router.didConfirmProfile)
         case .home:
@@ -44,9 +44,9 @@ struct RootView: View {
         switch router.state {
         case .launching: return 0
         case .welcome: return 1
-        case .careerPath: return 2
-        case .uploadCV: return 3
-        case .analysing: return 4
+        case .uploadCV: return 2
+        case .analysing: return 3
+        case .rolePreferences: return 4
         case .confirmProfile: return 5
         case .home: return 6
         }
