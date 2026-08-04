@@ -2,14 +2,16 @@ import SwiftUI
 import UniformTypeIdentifiers
 import os
 
-/// S03 · Upload CV. Pick a PDF/DOCX from Files, validate inline, then continue.
+/// S03 · Add your CV or a link. Upload a PDF/DOCX, or paste a portfolio / profile
+/// URL — Atlas reads either and builds the profile. Works for any field.
 struct UploadCVView: View {
-    var onContinue: (PickedCV) -> Void
-    var onBack: () -> Void
+    var onContinue: (CVSource) -> Void
 
     @State private var picked: PickedCV?
+    @State private var link: String = ""
     @State private var validationError: CVValidation.Failure?
     @State private var importing = false
+    @FocusState private var linkFocused: Bool
 
     private let log = Logger(subsystem: "ai.sofsuite.atlas", category: "upload")
 
@@ -19,15 +21,18 @@ struct UploadCVView: View {
         return types
     }()
 
+    private var trimmedLink: String { link.trimmingCharacters(in: .whitespacesAndNewlines) }
+    private var canContinue: Bool { picked != nil || !trimmedLink.isEmpty }
+
     var body: some View {
-        OnboardingScaffold(stageIndex: 1, onBack: onBack) {
+        OnboardingScaffold(stageIndex: 0) {
             VStack(alignment: .leading, spacing: Space.l) {
-                Eyebrow("UPLOAD CV · 2 OF 3")
-                Text("Let's start\nwith your CV.")
+                Eyebrow("YOUR STORY · 1 OF 3")
+                Text("Add your CV\nor portfolio.")
                     .atlasText(.display)
                     .foregroundStyle(Palette.ink)
                     .fixedSize(horizontal: false, vertical: true)
-                Text("Atlas reads it and builds your profile. No forms to fill.")
+                Text("Atlas reads it and builds your profile — no forms. Upload a file, or paste a link to your CV or portfolio.")
                     .atlasText(.body)
                     .foregroundStyle(Palette.inkSecondary)
             }
@@ -48,15 +53,18 @@ struct UploadCVView: View {
             orDivider
 
             VStack(alignment: .leading, spacing: Space.s) {
-                AtlasButton(title: "Import from LinkedIn", kind: .secondary, isEnabled: false,
-                            leading: { ProviderMark(.linkedIn) }) {}
-                Text("LinkedIn only shares your name and email. Your CV is the real story.")
+                linkField
+                Text("A CV or portfolio link — personal site, Behance, Dribbble, Google Scholar. Atlas reads it.")
                     .atlasText(.caption)
                     .foregroundStyle(Palette.inkTertiary)
             }
         } bottom: {
-            AtlasButton("Continue →", isEnabled: picked != nil) {
-                if let picked { onContinue(picked) }
+            AtlasButton("Continue →", isEnabled: canContinue) {
+                if let picked {
+                    onContinue(.file(picked))
+                } else if !trimmedLink.isEmpty {
+                    onContinue(.link(trimmedLink))
+                }
             }
         }
         .fileImporter(isPresented: $importing,
@@ -76,11 +84,11 @@ struct UploadCVView: View {
                     .overlay(Image(systemName: "arrow.up.doc")
                         .font(.system(size: 22, weight: .medium))
                         .foregroundStyle(Palette.inkSecondary))
-                Text("Drop your PDF here").atlasText(.bodyStrong).foregroundStyle(Palette.ink)
-                Text("or tap to browse files").atlasText(.caption).foregroundStyle(Palette.inkTertiary)
+                Text("Upload your CV or portfolio").atlasText(.bodyStrong).foregroundStyle(Palette.ink)
+                Text("PDF or DOCX · tap to browse").atlasText(.caption).foregroundStyle(Palette.inkTertiary)
             }
             .frame(maxWidth: .infinity)
-            .frame(height: 180)
+            .frame(height: 170)
             .background(Palette.card)
             .clipShape(RoundedRectangle(cornerRadius: Radius.card, style: .continuous))
             .overlay(
@@ -109,6 +117,28 @@ struct UploadCVView: View {
                     .foregroundStyle(Palette.blue)
             }
         }
+    }
+
+    private var linkField: some View {
+        HStack(spacing: Space.s) {
+            Image(systemName: "link").font(.system(size: 15)).foregroundStyle(Palette.inkTertiary)
+            TextField("Paste a link", text: $link)
+                .textInputAutocapitalization(.never)
+                .autocorrectionDisabled()
+                .keyboardType(.URL)
+                .submitLabel(.done)
+                .focused($linkFocused)
+                .font(.system(size: 16))
+                .foregroundStyle(Palette.ink)
+        }
+        .padding(.horizontal, Space.l)
+        .frame(height: 54)
+        .background(Palette.card)
+        .clipShape(RoundedRectangle(cornerRadius: Radius.button, style: .continuous))
+        .overlay(
+            RoundedRectangle(cornerRadius: Radius.button, style: .continuous)
+                .strokeBorder(linkFocused ? Palette.blue : Palette.border, lineWidth: 1)
+        )
     }
 
     private var orDivider: some View {
@@ -151,5 +181,5 @@ struct UploadCVView: View {
 }
 
 #Preview {
-    UploadCVView(onContinue: { _ in }, onBack: {})
+    UploadCVView(onContinue: { _ in })
 }

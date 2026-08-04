@@ -25,7 +25,6 @@ struct JobsView: View {
             }
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
-        .atlasSky(height: 260, intensity: 0.75, maxClouds: 3)
         .sheet(item: $accepting) { match in
             AcceptSheet(match: match) { _ in
                 UINotificationFeedbackGenerator().notificationOccurred(.success)
