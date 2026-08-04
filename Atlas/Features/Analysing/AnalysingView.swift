@@ -5,7 +5,7 @@ import os
 /// Runs the parser, holds the river for at least 2.5s so a fast result never
 /// reads as fake, and shows a proper in-place failure state.
 struct AnalysingView: View {
-    let cv: PickedCV
+    let source: CVSource
     var onFinished: () -> Void
     var onRetry: () -> Void
     var onManualEntry: () -> Void
@@ -71,7 +71,7 @@ struct AnalysingView: View {
         // Hold the river for at least 2.5s even if the parse returns sooner.
         async let floor: () = Task.sleep(for: .seconds(2.5))
         do {
-            let result = try await MockCVParser.parse(cv)
+            let result = try await MockCVParser.parse(source)
             try? await floor
             store.apply(result, email: auth.user?.email)
             log.info("Parse succeeded")
@@ -89,7 +89,7 @@ struct AnalysingView: View {
 }
 
 #Preview {
-    AnalysingView(cv: PickedCV(filename: "cv.pdf", byteSize: 1000, data: Data()),
+    AnalysingView(source: .file(PickedCV(filename: "cv.pdf", byteSize: 1000, data: Data())),
                   onFinished: {}, onRetry: {}, onManualEntry: {})
         .environment(ProfileStore())
         .environment(AuthStore())

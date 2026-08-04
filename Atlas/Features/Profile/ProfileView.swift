@@ -19,14 +19,26 @@ struct ProfileView: View {
             ScrollView {
                 VStack(alignment: .leading, spacing: Space.block) {
                     header
-                    if let li = p.linkedIn { linkedInCard(li) }
+                    if !p.desiredRoles.isEmpty { rolesSection }
+
+                    // Connected highlights ride high and blend into one profile:
+                    // name → GitHub chart → LinkedIn → experience/education → work.
                     if let gh = p.github { githubCard(gh) }
-                    if let gh = p.github, !gh.pinnedProjects.isEmpty { pinnedSection(gh) }
-                    if let gh = p.github, !gh.projects.isEmpty { reposSection(gh) }
+                    if let li = p.linkedIn { linkedInCard(li) }
+
                     if !p.experiences.isEmpty { experienceSection }
                     if !p.education.isEmpty { educationSection }
+                    if let gh = p.github {
+                        if !gh.pinnedProjects.isEmpty { pinnedSection(gh) }
+                        if !gh.projects.isEmpty { reposSection(gh) }
+                    }
                     if !p.skills.isEmpty { skillsSection }
                     if !p.languages.isEmpty { languagesSection }
+                    if let url = p.portfolioURL { portfolioCard(url) }
+
+                    // Connect prompts appear only while a source is missing.
+                    if p.linkedIn == nil { connectCard(.linkedIn) }
+                    if p.github == nil { connectCard(.github) }
 
                     if let onSignOut {
                         Button(action: onSignOut) {
@@ -43,7 +55,7 @@ struct ProfileView: View {
                 .padding(.bottom, Space.block)
             }
         }
-        .atlasSky(height: 260, intensity: 0.62, maxClouds: 3)
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
     }
 
     // MARK: Nav + header
@@ -95,7 +107,7 @@ struct ProfileView: View {
     private func linkedInCard(_ li: LinkedInData) -> some View {
         AtlasCard {
             VStack(alignment: .leading, spacing: Space.l) {
-                Eyebrow("LINKEDIN")
+                connectedHeader("LINKEDIN") { store.disconnectLinkedIn() }
                 HStack(spacing: 0) {
                     stat(abbrev(li.connections), "Connections")
                     statDivider
@@ -112,7 +124,7 @@ struct ProfileView: View {
     private func githubCard(_ gh: GitHubData) -> some View {
         AtlasCard {
             VStack(alignment: .leading, spacing: Space.m) {
-                Eyebrow("GITHUB")
+                connectedHeader("GITHUB") { store.disconnectGitHub() }
                 ContributionGraph(seed: 7)
                 Text("\(gh.contributionsLastYear.formatted()) contributions in the last year")
                     .atlasText(.caption).foregroundStyle(Palette.inkTertiary)
@@ -268,6 +280,73 @@ struct ProfileView: View {
                 }
             }
         }
+    }
+
+    private var rolesSection: some View {
+        sectionCard("LOOKING FOR") {
+            FlowLayout {
+                ForEach(p.desiredRoles, id: \.self) { role in
+                    Text(role)
+                        .font(.system(size: 14, weight: .medium))
+                        .foregroundStyle(Palette.blue)
+                        .padding(.vertical, 8).padding(.horizontal, 13)
+                        .background(Capsule().fill(Palette.blueTint))
+                }
+            }
+        }
+    }
+
+    private func portfolioCard(_ url: String) -> some View {
+        sectionCard("PORTFOLIO") {
+            Link(destination: URL(string: url.hasPrefix("http") ? url : "https://\(url)") ?? URL(string: "https://atlas.app")!) {
+                HStack(spacing: Space.s) {
+                    Image(systemName: "link").font(.system(size: 13))
+                    Text(url).atlasText(.body).lineLimit(1).truncationMode(.middle)
+                    Spacer(minLength: 0)
+                    Image(systemName: "arrow.up.right").font(.system(size: 12, weight: .semibold))
+                }
+                .foregroundStyle(Palette.blue)
+            }
+        }
+    }
+
+    // MARK: Connectors (optional, reversible)
+
+    private func connectedHeader(_ title: String, disconnect: @escaping () -> Void) -> some View {
+        HStack {
+            Eyebrow(title)
+            Spacer()
+            Button("Disconnect") { withAnimation(.easeInOut(duration: 0.25)) { disconnect() } }
+                .font(.system(size: 12, weight: .medium))
+                .foregroundStyle(Palette.inkTertiary)
+        }
+    }
+
+    private func connectCard(_ mark: BrandMark) -> some View {
+        let isLinkedIn = mark == .linkedIn
+        return Button {
+            withAnimation(.easeInOut(duration: 0.3)) {
+                if isLinkedIn { store.connectLinkedIn() } else { store.connectGitHub() }
+            }
+        } label: {
+            AtlasCard(padding: Space.l) {
+                HStack(spacing: Space.m) {
+                    BrandMarkView(mark: mark, size: 34, monoColor: Palette.ink)
+                    VStack(alignment: .leading, spacing: 2) {
+                        Text(isLinkedIn ? "Connect LinkedIn" : "Connect GitHub")
+                            .atlasText(.bodyStrong).foregroundStyle(Palette.ink)
+                        Text(isLinkedIn ? "Add your network and activity."
+                                        : "Show your contributions and projects.")
+                            .atlasText(.caption).foregroundStyle(Palette.inkSecondary)
+                    }
+                    Spacer(minLength: Space.s)
+                    Text("Connect")
+                        .font(.system(size: 14, weight: .semibold))
+                        .foregroundStyle(Palette.blue)
+                }
+            }
+        }
+        .buttonStyle(.plain)
     }
 
     // MARK: Bits
