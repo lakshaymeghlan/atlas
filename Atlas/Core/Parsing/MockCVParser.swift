@@ -18,8 +18,8 @@ enum CVParseError: LocalizedError, Equatable {
 /// other paths: include "scan"/"image"/"photo" to see the failure state, or
 /// "slow" to see the >12s long-running copy.
 enum MockCVParser {
-    static func parse(_ cv: PickedCV) async throws -> CVParseResult {
-        let name = cv.filename.lowercased()
+    static func parse(_ source: CVSource) async throws -> CVParseResult {
+        let name = source.displayName.lowercased()
 
         if name.contains("scan") || name.contains("image") || name.contains("photo") {
             try? await Task.sleep(for: .seconds(1.2))

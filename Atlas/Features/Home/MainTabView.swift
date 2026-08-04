@@ -11,6 +11,15 @@ struct MainTabView: View {
 
     var body: some View {
         ZStack {
+            // One warm sky behind every tab, so each tab's content respects the
+            // safe area (no per-tab ignoresSafeArea backgrounds fighting it).
+            ZStack(alignment: .top) {
+                Palette.paper
+                SkyBackdrop(height: 280, intensity: 0.75, maxClouds: 3)
+                    .ignoresSafeArea(edges: .top)
+            }
+            .ignoresSafeArea()
+
             switch tab {
             case .jobs: JobsView()
             case .saved: SavedView()
@@ -104,7 +113,6 @@ struct SavedView: View {
             }
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
-        .atlasSky(height: 260, intensity: 0.75, maxClouds: 3)
     }
 
     private func savedCard(_ match: JobMatch) -> some View {

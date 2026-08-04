@@ -144,6 +144,11 @@ struct UserProfile: Codable, Equatable {
     var education: [Education] = []
     var skills: [Skill] = []
     var languages: [Language] = []
+    /// Roles the person is looking for (typed + picked on the roles step).
+    var desiredRoles: [String] = []
+    /// A portfolio / profile link they gave instead of (or with) a CV.
+    var portfolioURL: String?
+    /// Optional, reversible connectors — nil until the person connects them.
     var github: GitHubData?
     var linkedIn: LinkedInData?
     var onboardedAt: Date?
