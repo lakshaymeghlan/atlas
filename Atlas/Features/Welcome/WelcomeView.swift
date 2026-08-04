@@ -51,16 +51,10 @@ struct WelcomeView: View {
 
                 Spacer(minLength: 40)
 
-                VStack(spacing: 12) {
-                    authButton(.linkedIn, "Continue with LinkedIn")
-                        .opacity(appeared ? 1 : 0)
-                        .offset(y: rise(appeared ? 0 : 22))
-                        .animation(reveal(0.22), value: appeared)
-                    authButton(.github, "Continue with GitHub")
-                        .opacity(appeared ? 1 : 0)
-                        .offset(y: rise(appeared ? 0 : 22))
-                        .animation(reveal(0.28), value: appeared)
-                }
+                authButton(.linkedIn, "Continue with LinkedIn")
+                    .opacity(appeared ? 1 : 0)
+                    .offset(y: rise(appeared ? 0 : 22))
+                    .animation(reveal(0.22), value: appeared)
 
                 footer
                     .padding(.top, 18)
