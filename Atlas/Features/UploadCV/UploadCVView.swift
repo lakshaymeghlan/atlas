@@ -76,7 +76,16 @@ struct UploadCVView: View {
     // MARK: Drop zone / file row
 
     private var dropZone: some View {
-        Button { importing = true } label: {
+        Button {
+            // Hosted previews (Appetize) have no real Files access — attach a
+            // sample CV so the reviewer can walk the flow instead of hitting a
+            // dead-end picker. Real device builds open the picker.
+            if Config.demoMode {
+                picked = PickedCV(filename: "Alex_Rivera_Resume.pdf", byteSize: 248_000, data: Data())
+            } else {
+                importing = true
+            }
+        } label: {
             VStack(spacing: Space.m) {
                 RoundedRectangle(cornerRadius: Radius.chip, style: .continuous)
                     .fill(Palette.chip)
@@ -112,7 +121,7 @@ struct UploadCVView: View {
                     Text(byteCount(cv.byteSize)).atlasText(.caption).foregroundStyle(Palette.inkTertiary)
                 }
                 Spacer()
-                Button("Replace") { importing = true }
+                Button("Replace") { if Config.demoMode { picked = nil } else { importing = true } }
                     .font(.system(size: 15, weight: .semibold))
                     .foregroundStyle(Palette.blue)
             }

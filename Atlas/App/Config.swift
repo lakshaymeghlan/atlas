@@ -12,4 +12,10 @@ enum Config {
 
     /// OAuth callback scheme (registered in Info.plist). Unused until real auth.
     static let oauthScheme = "atlas"
+
+    /// Demo mode for hosted previews (Appetize) where the Files picker can't reach
+    /// a real filesystem. On: tapping "Upload" attaches a sample CV so a reviewer
+    /// can walk the whole flow. Off for real device builds — the picker works there.
+    /// ponytail: single flag, remove once real upload is wired to a backend.
+    static let demoMode = true
 }
