@@ -1,280 +1,321 @@
 import SwiftUI
 import UIKit
 
-/// S01 · Welcome — the journey, as a flowing ocean river. A wordmark, a living
-/// blue current threading three waypoints (Begin · Prepare · Find), one editorial
-/// headline, and a single obvious next step: begin with your CV.
+/// S01 · Welcome — the Canopy path. One trunk drawn through a tree, three phases
+/// as waypoints, light coming down through the leaves. The opening is a single
+/// ~2.4s timeline: paper → wordmark → the path draws itself (nodes surfacing as
+/// the draw reaches them) → one light shaft → a single fall of leaves → headline
+/// → CTA. Every animation fires once and resolves. Tap anywhere to skip to the
+/// end; Reduce Motion jumps straight there.
 struct WelcomeView: View {
     var onBegin: () -> Void
 
-    @State private var appeared = false
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
+
+    // Opening-sequence state (all driven by one timeline).
+    @State private var rootIn = false
+    @State private var wordIn = false
+    @State private var wordTracking: CGFloat = 9.9      // 0.45em @ 22 → settles to 0.24em (5.28)
+    @State private var trunkProgress: CGFloat = 0
+    @State private var crownProgress: CGFloat = 0
+    @State private var nodesRevealed = [false, false, false]
+    @State private var shaftActive = false
+    @State private var leavesActive = false
+    @State private var headlineIn = [false, false]
+    @State private var ctaIn = false
+    @State private var ctaBreath = false
+
+    @State private var skipped = false
+    @State private var timeline: Task<Void, Never>?
+    @State private var pathSize: CGSize = .zero
+
     private let margin: CGFloat = 26
-    private var reduce: Bool { Motion.reduceMotion }
+    private let wordSettled: CGFloat = 5.28
+
+    private let ease = Animation.timingCurve(0.22, 1, 0.36, 1, duration: 0.5)
+    private func ease(_ d: Double) -> Animation { .timingCurve(0.22, 1, 0.36, 1, duration: d) }
 
     var body: some View {
         ZStack {
-            Ocean.paper.ignoresSafeArea()
+            Color.canopyPaper.ignoresSafeArea()
 
             VStack(spacing: 0) {
                 topBar
-                    .opacity(appeared ? 1 : 0)
-                    .animation(reveal(0), value: appeared)
+                wordmark.padding(.top, 2).padding(.bottom, 12).zIndex(1)
 
-                Text("c a n o p y")
-                    .font(Typeface.display(21))
-                    .tracking(2)
-                    .foregroundStyle(Ocean.deep)
-                    .padding(.top, 2)
-                    .opacity(appeared ? 1 : 0)
-                    .animation(reveal(0.05), value: appeared)
+                ZStack {
+                    CanopyPath(trunkProgress: trunkProgress,
+                               crownProgress: crownProgress,
+                               nodesRevealed: nodesRevealed)
+                    if shaftActive, pathSize.height > 0 { LightShaft(area: pathSize) }
+                    if leavesActive, pathSize.height > 0 { FallingLeaves(area: pathSize) }
+                }
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
+                .background(
+                    GeometryReader { g in
+                        Color.clear
+                            .onAppear { pathSize = g.size }
+                            .onChange(of: g.size) { _, newValue in pathSize = newValue }
+                    }
+                )
 
-                RiverJourney(appeared: appeared)
-                    .frame(maxWidth: .infinity, maxHeight: .infinity)
-
-                Text("Your next move,\ncarried forward.")
-                    .font(Typeface.display(30))
-                    .tracking(-0.4)
-                    .multilineTextAlignment(.center)
-                    .foregroundStyle(Ocean.ink)
-                    .fixedSize(horizontal: false, vertical: true)
-                    .opacity(appeared ? 1 : 0)
-                    .offset(y: rise(appeared ? 0 : 14))
-                    .animation(reveal(0.18), value: appeared)
-
-                Text("Canopy helps you see the path and\nmove through it with confidence.")
-                    .font(.system(size: 15.5, weight: .regular))
-                    .lineSpacing(4)
-                    .multilineTextAlignment(.center)
-                    .foregroundStyle(Ocean.inkSecondary)
-                    .fixedSize(horizontal: false, vertical: true)
-                    .padding(.top, 12)
-                    .opacity(appeared ? 1 : 0)
-                    .offset(y: rise(appeared ? 0 : 14))
-                    .animation(reveal(0.24), value: appeared)
-
-                beginButton
-                    .padding(.top, 26)
-                    .opacity(appeared ? 1 : 0)
-                    .offset(y: rise(appeared ? 0 : 22))
-                    .animation(reveal(0.30), value: appeared)
-
-                Text("You remain in control at every step.")
-                    .font(.system(size: 13, weight: .regular))
-                    .foregroundStyle(Ocean.inkTertiary)
-                    .padding(.top, 14)
-                    .opacity(appeared ? 1 : 0)
-                    .animation(reveal(0.38), value: appeared)
+                headline.padding(.top, 4)
+                subhead.padding(.top, 12)
+                cta.padding(.top, 24)
+                secondary.padding(.top, 14)
+                footer.padding(.top, 16)
             }
             .padding(.horizontal, margin)
             .padding(.bottom, 18)
         }
-        .onAppear { appeared = true }
+        .canopyGrain()
+        .opacity(rootIn ? 1 : 0)
+        .contentShape(Rectangle())
+        .onTapGesture { skip() }
+        .onAppear {
+            guard timeline == nil else { return }
+            timeline = Task { await runTimeline() }
+        }
+        .onDisappear { timeline?.cancel() }
     }
+
+    // MARK: Pieces
 
     private var topBar: some View {
         HStack {
             Spacer()
             Button(action: begin) {
                 Text("Skip")
-                    .font(.system(size: 15, weight: .regular))
-                    .foregroundStyle(Ocean.inkSecondary)
+                    .font(Typeface.body(13))
+                    .foregroundStyle(Color.canopy400)
             }
+            .accessibilityLabel("Skip the intro")
         }
         .padding(.top, Space.s)
     }
 
-    private var beginButton: some View {
+    private var wordmark: some View {
+        Text("canopy")
+            .font(Typeface.display(22))
+            .tracking(wordTracking)
+            .foregroundStyle(Color.canopy800)
+            .opacity(wordIn ? 1 : 0)
+            .accessibilityAddTraits(.isHeader)
+    }
+
+    private var headline: some View {
+        VStack(alignment: .leading, spacing: 0) {
+            revealLine("See the whole path", shown: headlineIn[0])
+            revealLine("before you take it.", shown: headlineIn[1])
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .accessibilityElement(children: .combine)
+    }
+
+    private func revealLine(_ text: String, shown: Bool) -> some View {
+        Text(text)
+            .atlasText(.displayLarge)
+            .foregroundStyle(Color.canopy900)
+            .fixedSize(horizontal: false, vertical: true)
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .offset(y: shown ? 0 : 46)
+            .opacity(shown ? 1 : 0)
+            .clipped()
+    }
+
+    private var subhead: some View {
+        Text("Upload your CV once. Canopy finds roles that actually fit, walks you through every interview, and introduces you to your people once you land.")
+            .atlasText(.body)
+            .foregroundStyle(Color.canopy600.opacity(0.8))
+            .fixedSize(horizontal: false, vertical: true)
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .opacity(ctaIn ? 1 : 0)
+    }
+
+    private var cta: some View {
         Button(action: begin) {
             Text("Begin with my CV")
-                .font(.system(size: 17, weight: .semibold))
+                .font(Typeface.body(17, weight: .medium))
         }
-        .buttonStyle(OceanButtonStyle())
+        .buttonStyle(CanopyCTAStyle())
+        .scaleEffect(ctaBreath ? 1.008 : 1)
+        .offset(y: ctaIn ? 0 : 12)
+        .opacity(ctaIn ? 1 : 0)
     }
+
+    private var secondary: some View {
+        Button(action: begin) {
+            Text("I'm hiring →")
+                .font(Typeface.body(15))
+                .foregroundStyle(Color.canopy400)
+        }
+        .opacity(ctaIn ? 1 : 0)
+    }
+
+    private var footer: some View {
+        Text("Your CV stays yours. Delete it anytime.")
+            .font(Typeface.body(13))
+            .foregroundStyle(Color.canopy400)
+            .opacity(ctaIn ? 1 : 0)
+    }
+
+    // MARK: Actions
 
     private func begin() {
         UIImpactFeedbackGenerator(style: .soft).impactOccurred(intensity: 0.7)
         onBegin()
     }
 
-    private func rise(_ y: CGFloat) -> CGFloat { reduce ? 0 : y }
-    private func reveal(_ delay: Double) -> Animation {
-        reduce ? .easeOut(duration: 0.25).delay(delay)
-               : .spring(response: 0.6, dampingFraction: 0.9).delay(delay)
+    private func skip() {
+        guard !skipped, !allShown else { return }
+        skipped = true
+        timeline?.cancel()
+        withAnimation(.easeOut(duration: 0.2)) { showEndState() }
     }
-}
 
-// MARK: - The river (draws itself in once, then rests)
+    private var allShown: Bool { ctaIn && trunkProgress == 1 }
 
-/// A gently curving ocean current with a soft glow, two tributaries, and three
-/// waypoints. On appear the river strokes itself in from source to mouth and the
-/// waypoints surface as the water reaches them — a single opening flourish, then
-/// everything holds still.
-private struct RiverJourney: View {
-    var appeared: Bool
-    private var reduce: Bool { Motion.reduceMotion }
+    private func showEndState() {
+        rootIn = true; wordIn = true; wordTracking = wordSettled
+        trunkProgress = 1; crownProgress = 1
+        nodesRevealed = [true, true, true]
+        headlineIn = [true, true]; ctaIn = true
+    }
 
-    @State private var draw: CGFloat = 0   // 0 → 1, the one opening animation
+    // MARK: The one timeline
 
-    // Waypoints as vertical fractions of the region.
-    private let nodes: [(y: CGFloat, label: String, side: Side)] = [
-        (0.30, "Begin", .right),
-        (0.56, "Prepare", .left),
-        (0.82, "Find", .right),
-    ]
-    private enum Side { case left, right }
-
-    // Source above the first node, mouth below the last.
-    private let top: CGFloat = 0.10
-    private let bottom: CGFloat = 0.96
-
-    var body: some View {
-        GeometryReader { geo in
-            let w = geo.size.width, h = geo.size.height
-            ZStack {
-                // Soft glow band, revealed with the draw.
-                RiverSpine(top: top, bottom: bottom)
-                    .trim(from: 0, to: draw)
-                    .stroke(Ocean.band.opacity(0.55),
-                            style: StrokeStyle(lineWidth: 26, lineCap: .round))
-                    .blur(radius: 12)
-
-                // Tributaries fan up from the source once the head is drawn.
-                Tributaries(headY: top)
-                    .stroke(Ocean.mid.opacity(0.45),
-                            style: StrokeStyle(lineWidth: 1.4, lineCap: .round))
-                    .opacity(Double(tribProgress))
-
-                // The river line — aqua at the source, deep at the mouth.
-                RiverSpine(top: top, bottom: bottom)
-                    .trim(from: 0, to: draw)
-                    .stroke(
-                        LinearGradient(colors: [Ocean.aqua, Ocean.mid, Ocean.deep],
-                                       startPoint: .top, endPoint: .bottom),
-                        style: StrokeStyle(lineWidth: 2.8, lineCap: .round))
-
-                // Journey icons — fade + settle in, then still.
-                journeyIcon("house", x: w * 0.24, y: h * 0.30, order: 0)
-                journeyIcon("mappin.and.ellipse", x: w * 0.75, y: h * 0.55, order: 1)
-                journeyIcon("briefcase", x: w * 0.24, y: h * 0.80, order: 2)
-
-                // Waypoint nodes + labels — surface as the water reaches them.
-                ForEach(Array(nodes.enumerated()), id: \.offset) { i, node in
-                    let p = CGPoint(x: spineX(node.y, width: w), y: node.y * h)
-                    let reached = draw >= node.y - 0.02
-                    nodeDot(active: i == 0)
-                        .scaleEffect(reached ? 1 : 0.1)
-                        .opacity(reached ? 1 : 0)
-                        .position(p)
-                        .animation(.spring(response: 0.45, dampingFraction: 0.68), value: reached)
-                    Text(node.label)
-                        .font(.system(size: 14, weight: .medium))
-                        .foregroundStyle(Ocean.inkSecondary)
-                        .position(x: p.x + (node.side == .right ? 46 : -46), y: p.y)
-                        .opacity(reached ? 1 : 0)
-                        .animation(.easeOut(duration: 0.35), value: reached)
-                }
-            }
-            .onAppear {
-                guard draw == 0 else { return }
-                if reduce { draw = 1 }
-                else { withAnimation(.easeInOut(duration: 1.25)) { draw = 1 } }
-            }
+    @MainActor private func runTimeline() async {
+        if reduceMotion {
+            withAnimation(.easeOut(duration: 0.2)) { showEndState() }
+            return
         }
-    }
 
-    // Tributaries start drawing once the spine passes the source.
-    private var tribProgress: CGFloat { max(0, min(1, (draw - top) / 0.35)) }
-
-    // Same spine equation the RiverSpine shape uses — for node placement.
-    private func spineX(_ yFrac: CGFloat, width: CGFloat) -> CGFloat {
-        width * 0.5 + sin(yFrac * .pi * 2.1) * (width * 0.05)
-    }
-
-    private func nodeDot(active: Bool) -> some View {
-        ZStack {
-            Circle().fill(Ocean.paper).frame(width: 18, height: 18)
-            Circle().strokeBorder(active ? Ocean.deep : Ocean.mid, lineWidth: active ? 3 : 2)
-                .frame(width: 18, height: 18)
-            if active { Circle().fill(Ocean.deep).frame(width: 7, height: 7) }
+        let drawStart = 300, drawDur = 1300
+        var events: [(t: Int, run: () -> Void)] = [
+            (0,   { withAnimation(.easeOut(duration: 0.4)) { rootIn = true } }),
+            (100, { withAnimation(ease(0.7)) { wordIn = true; wordTracking = wordSettled } }),
+            (drawStart, {
+                withAnimation(ease(1.3)) { trunkProgress = 1 }
+                withAnimation(ease(0.5)) { crownProgress = 1 }
+            }),
+            (1200, { withAnimation(.linear(duration: 0.01)) { shaftActive = true } }),
+            (1400, { leavesActive = true }),
+            (1600, { withAnimation(ease(0.6)) { headlineIn[0] = true } }),
+            (1680, { withAnimation(ease(0.6)) { headlineIn[1] = true } }),
+            (2000, { withAnimation(ease(0.5)) { ctaIn = true } }),
+        ]
+        // Node pops derived from the trunk geometry, not magic timestamps.
+        for (i, frac) in CanopyPath.nodeDrawFractions.enumerated() {
+            let t = drawStart + Int(frac * CGFloat(drawDur))
+            events.append((t, {
+                UIImpactFeedbackGenerator(style: .light).impactOccurred()
+                withAnimation(.spring(response: 0.26, dampingFraction: 0.55)) { nodesRevealed[i] = true }
+            }))
         }
-        .shadow(color: Ocean.deep.opacity(0.20), radius: 4, y: 1)
-    }
+        events.sort { $0.t < $1.t }
 
-    private func journeyIcon(_ name: String, x: CGFloat, y: CGFloat, order: Int) -> some View {
-        Image(systemName: name)
-            .font(.system(size: 22, weight: .regular))
-            .foregroundStyle(Ocean.mid.opacity(0.85))
-            .position(x: x, y: y)
-            .opacity(appeared ? 1 : 0)
-            .offset(y: appeared ? 0 : 8)
-            .animation(.easeOut(duration: 0.5).delay(0.55 + Double(order) * 0.18), value: appeared)
-    }
-}
-
-/// The river spine: a gentle sine curve down the region. Trimmable so it can
-/// stroke itself in.
-private struct RiverSpine: Shape {
-    var top: CGFloat
-    var bottom: CGFloat
-    func path(in rect: CGRect) -> Path {
-        Path { p in
-            var first = true
-            var y = rect.height * top
-            let end = rect.height * bottom
-            while y <= end {
-                let x = rect.width * 0.5 + sin((y / rect.height) * .pi * 2.1) * (rect.width * 0.05)
-                let pt = CGPoint(x: x, y: y)
-                if first { p.move(to: pt); first = false } else { p.addLine(to: pt) }
-                y += 2
+        do {
+            var last = 0
+            for e in events {
+                if e.t > last { try await Task.sleep(for: .milliseconds(e.t - last)); last = e.t }
+                e.run()
             }
+            // CTA: exactly one slow breath, then stop.
+            try await Task.sleep(for: .milliseconds(120))
+            withAnimation(.easeInOut(duration: 2)) { ctaBreath = true }
+            try await Task.sleep(for: .seconds(2))
+            withAnimation(.easeInOut(duration: 2)) { ctaBreath = false }
+        } catch {
+            return // cancelled by skip — end state already applied
         }
     }
 }
 
-/// Two tributaries fanning up and out from the source point.
-private struct Tributaries: Shape {
-    var headY: CGFloat
-    func path(in rect: CGRect) -> Path {
-        let head = CGPoint(
-            x: rect.width * 0.5 + sin(headY * .pi * 2.1) * (rect.width * 0.05),
-            y: rect.height * headY)
-        return Path { p in
-            for dir in [-1.0, 1.0] as [CGFloat] {
-                p.move(to: head)
-                p.addQuadCurve(
-                    to: CGPoint(x: head.x + dir * rect.width * 0.46, y: rect.height * 0.02),
-                    control: CGPoint(x: head.x + dir * rect.width * 0.22, y: rect.height * 0.06))
-            }
-        }
-    }
-}
+// MARK: - Primary CTA
 
-// MARK: - Ocean palette + button (Welcome-local, cool & happy)
-
-private enum Ocean {
-    static let paper = Color(hex: "F3FAFB")
-    static let ink = Color(hex: "0C2A31")
-    static let inkSecondary = Color(hex: "4E6B72")
-    static let inkTertiary = Color(hex: "8AA4AB")
-    static let deep = Color(hex: "0C6B7A")
-    static let mid = Color(hex: "1E90A8")
-    static let aqua = Color(hex: "35B7CE")
-    static let foam = Color(hex: "BEF0F7")
-    static let band = Color(hex: "8FD9E6")
-}
-
-/// Solid ocean button — deep teal fill, soft lift, quiet spring press.
-private struct OceanButtonStyle: ButtonStyle {
+/// Full-width canopy-shade CTA: 56pt, 18pt radius, paper label. No shadow (the
+/// only motion it gets is the single breath applied by the caller).
+private struct CanopyCTAStyle: ButtonStyle {
     func makeBody(configuration: Configuration) -> some View {
         let pressed = configuration.isPressed
-        let shape = RoundedRectangle(cornerRadius: 18, style: .continuous)
         configuration.label
-            .foregroundStyle(.white)
-            .frame(maxWidth: .infinity, minHeight: 58)
-            .background(shape.fill(pressed ? Ocean.deep.opacity(0.9) : Ocean.deep))
-            .shadow(color: Ocean.deep.opacity(pressed ? 0.15 : 0.28), radius: pressed ? 5 : 14, x: 0, y: pressed ? 2 : 7)
-            .scaleEffect(pressed ? 0.985 : 1)
-            .animation(.spring(response: 0.32, dampingFraction: 0.72), value: pressed)
+            .foregroundStyle(Color.canopyPaper)
+            .frame(maxWidth: .infinity, minHeight: 56)
+            .background(RoundedRectangle(cornerRadius: 18, style: .continuous)
+                .fill(pressed ? Color.canopy900 : Color.canopy800))
+            .animation(.easeOut(duration: 0.15), value: pressed)
+    }
+}
+
+// MARK: - Light shaft (one pass)
+
+/// A vertical `sun-wash` band that sweeps down the trunk once — sun moving
+/// through leaves. This is the only place amber appears on this screen. Rendered
+/// only while active; plays its keyframes once on appear.
+private struct LightShaft: View {
+    let area: CGSize
+    @State private var progress: CGFloat = 0   // 0 = above the frame → 1 = below it
+
+    var body: some View {
+        let h = max(1, area.height.isFinite ? area.height : 1)
+        let w = max(1, area.width.isFinite ? area.width : 1)
+        let bandH = h * 0.34
+        let y = -bandH + progress * (h + 2 * bandH)          // sweeps top → bottom, once
+        let op = 0.18 * (progress < 0.5 ? progress * 2 : (1 - progress) * 2)  // fade in then out
+
+        Rectangle()
+            .fill(LinearGradient(colors: [.clear, .sunWash, .clear],
+                                 startPoint: .top, endPoint: .bottom))
+            .frame(width: 96, height: bandH)
+            .blur(radius: 16)
+            .opacity(Double(op))
+            .position(x: w / 2, y: y)
+            .frame(width: w, height: h)
+            .clipped()
+            .allowsHitTesting(false)
+            .accessibilityHidden(true)
+            .onAppear { withAnimation(.easeInOut(duration: 1.6)) { progress = 1 } }
+    }
+}
+
+// MARK: - Falling leaves (one pass, then gone)
+
+private struct FallingLeaves: View {
+    // (xFraction, size, baseRotation, sway px, delay s, duration s)
+    private let specs: [(x: CGFloat, size: CGFloat, rot: Double, sway: CGFloat, delay: Double, dur: Double)] = [
+        (0.30, 20, -14, 22, 0.00, 2.4),
+        (0.52, 16, 10, 30, 0.18, 2.7),
+        (0.44, 22, -6, 18, 0.36, 2.3),
+        (0.64, 15, 20, 26, 0.54, 2.8),
+        (0.38, 18, 4, 24, 0.72, 2.5),
+    ]
+    let area: CGSize
+    var body: some View {
+        ZStack {
+            ForEach(specs.indices, id: \.self) { i in
+                FallingLeaf(spec: specs[i], area: area)
+            }
+        }
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
+        .allowsHitTesting(false)
+        .accessibilityHidden(true)
+    }
+}
+
+private struct FallingLeaf: View {
+    let spec: (x: CGFloat, size: CGFloat, rot: Double, sway: CGFloat, delay: Double, dur: Double)
+    let area: CGSize
+    @State private var fall: CGFloat = 0
+
+    var body: some View {
+        Leaf(length: spec.size, fill: .canopy400, opacity: 1)
+            .rotationEffect(.degrees(spec.rot + Double(fall) * 40))
+            .opacity(0.12 * Double(min(1, (1 - fall) * 3)))
+            .position(x: area.width * spec.x + sin(fall * .pi * 2) * spec.sway,
+                      y: -24 + fall * (area.height + 48))
+            .onAppear {
+                withAnimation(.easeIn(duration: spec.dur).delay(spec.delay)) { fall = 1 }
+            }
     }
 }
 

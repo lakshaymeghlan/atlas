@@ -73,5 +73,5 @@ struct BrandMarkView: View {
         BrandMarkView(mark: .github)
     }
     .padding()
-    .background(Color(hex: "FCFBF8"))
+    .background(Color.canopyPaper)
 }

@@ -23,11 +23,11 @@ struct RolePreferencesView: View {
                 Eyebrow("ROLES · 2 OF 3")
                 Text("What are you\nlooking for?")
                     .atlasText(.display)
-                    .foregroundStyle(Palette.ink)
+                    .foregroundStyle(Color.canopy900)
                     .fixedSize(horizontal: false, vertical: true)
                 Text("Pick a few roles, or type your own. Canopy matches you to these — you can change them anytime.")
                     .atlasText(.body)
-                    .foregroundStyle(Palette.inkSecondary)
+                    .foregroundStyle(Color.canopy600)
             }
 
             FlowLayout(spacing: Space.s) {
@@ -49,27 +49,27 @@ struct RolePreferencesView: View {
     private var addField: some View {
         HStack(spacing: Space.s) {
             Image(systemName: "plus").font(.system(size: 14, weight: .semibold))
-                .foregroundStyle(Palette.inkTertiary)
+                .foregroundStyle(Color.canopy400)
             TextField("Add a role", text: $custom)
                 .autocorrectionDisabled()
                 .submitLabel(.done)
                 .focused($customFocused)
                 .font(.system(size: 16))
-                .foregroundStyle(Palette.ink)
+                .foregroundStyle(Color.canopy900)
                 .onSubmit(addCustom)
             if !trimmed.isEmpty {
                 Button("Add", action: addCustom)
                     .font(.system(size: 15, weight: .semibold))
-                    .foregroundStyle(Palette.blue)
+                    .foregroundStyle(Color.canopy600)
             }
         }
         .padding(.horizontal, Space.l)
         .frame(height: 54)
-        .background(Palette.card)
+        .background(Color.canopyPaperDeep)
         .clipShape(RoundedRectangle(cornerRadius: Radius.button, style: .continuous))
         .overlay(
             RoundedRectangle(cornerRadius: Radius.button, style: .continuous)
-                .strokeBorder(customFocused ? Palette.blue : Palette.border, lineWidth: 1)
+                .strokeBorder(customFocused ? Color.canopy600 : Color.canopyPaperLine, lineWidth: 1)
         )
     }
 
@@ -106,11 +106,11 @@ private struct SelectableChip: View {
                 }
                 Text(text).font(.system(size: 14, weight: selected ? .semibold : .regular))
             }
-            .foregroundStyle(selected ? .white : Palette.ink)
+            .foregroundStyle(selected ? .white : Color.canopy900)
             .padding(.vertical, 9)
             .padding(.horizontal, 14)
             .background(
-                Capsule().fill(selected ? Palette.blue : Palette.chip)
+                Capsule().fill(selected ? Color.canopy600 : Color.canopyMist)
             )
         }
         .buttonStyle(.plain)

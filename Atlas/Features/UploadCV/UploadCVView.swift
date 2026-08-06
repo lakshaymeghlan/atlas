@@ -6,6 +6,7 @@ import os
 /// URL — Canopy reads either and builds the profile. Works for any field.
 struct UploadCVView: View {
     var onContinue: (CVSource) -> Void
+    var onBack: (() -> Void)? = nil
 
     @State private var picked: PickedCV?
     @State private var link: String = ""
@@ -25,16 +26,16 @@ struct UploadCVView: View {
     private var canContinue: Bool { picked != nil || !trimmedLink.isEmpty }
 
     var body: some View {
-        OnboardingScaffold(stageIndex: 0) {
+        OnboardingScaffold(stageIndex: 0, onBack: onBack) {
             VStack(alignment: .leading, spacing: Space.l) {
                 Eyebrow("YOUR STORY · 1 OF 3")
                 Text("Add your CV\nor portfolio.")
                     .atlasText(.display)
-                    .foregroundStyle(Palette.ink)
+                    .foregroundStyle(Color.canopy900)
                     .fixedSize(horizontal: false, vertical: true)
                 Text("Canopy reads it and builds your profile — no forms. Upload a file, or paste a link to your CV or portfolio.")
                     .atlasText(.body)
-                    .foregroundStyle(Palette.inkSecondary)
+                    .foregroundStyle(Color.canopy600)
             }
 
             VStack(alignment: .leading, spacing: Space.m) {
@@ -46,7 +47,7 @@ struct UploadCVView: View {
                 if let validationError {
                     Text(validationError.message)
                         .atlasText(.caption)
-                        .foregroundStyle(Palette.error)
+                        .foregroundStyle(Color.sunDeep)
                 }
             }
 
@@ -56,7 +57,7 @@ struct UploadCVView: View {
                 linkField
                 Text("A CV or portfolio link — personal site, Behance, Dribbble, Google Scholar. Canopy reads it.")
                     .atlasText(.caption)
-                    .foregroundStyle(Palette.inkTertiary)
+                    .foregroundStyle(Color.canopy400)
             }
         } bottom: {
             AtlasButton("Continue →", isEnabled: canContinue) {
@@ -88,21 +89,21 @@ struct UploadCVView: View {
         } label: {
             VStack(spacing: Space.m) {
                 RoundedRectangle(cornerRadius: Radius.chip, style: .continuous)
-                    .fill(Palette.chip)
+                    .fill(Color.canopyMist)
                     .frame(width: 56, height: 56)
                     .overlay(Image(systemName: "arrow.up.doc")
                         .font(.system(size: 22, weight: .medium))
-                        .foregroundStyle(Palette.inkSecondary))
-                Text("Upload your CV or portfolio").atlasText(.bodyStrong).foregroundStyle(Palette.ink)
-                Text("PDF or DOCX · tap to browse").atlasText(.caption).foregroundStyle(Palette.inkTertiary)
+                        .foregroundStyle(Color.canopy600))
+                Text("Upload your CV or portfolio").atlasText(.bodyStrong).foregroundStyle(Color.canopy900)
+                Text("PDF or DOCX · tap to browse").atlasText(.caption).foregroundStyle(Color.canopy400)
             }
             .frame(maxWidth: .infinity)
             .frame(height: 170)
-            .background(Palette.card)
+            .background(Color.canopyPaperDeep)
             .clipShape(RoundedRectangle(cornerRadius: Radius.card, style: .continuous))
             .overlay(
                 RoundedRectangle(cornerRadius: Radius.card, style: .continuous)
-                    .strokeBorder(Palette.border, style: StrokeStyle(lineWidth: 2, dash: [6, 4]))
+                    .strokeBorder(Color.canopyPaperLine, style: StrokeStyle(lineWidth: 2, dash: [6, 4]))
             )
         }
         .buttonStyle(.plain)
@@ -114,23 +115,23 @@ struct UploadCVView: View {
             HStack(spacing: Space.m) {
                 Image(systemName: "doc.text")
                     .font(.system(size: 20, weight: .medium))
-                    .foregroundStyle(Palette.blue)
+                    .foregroundStyle(Color.canopy600)
                 VStack(alignment: .leading, spacing: 2) {
-                    Text(cv.filename).atlasText(.bodyStrong).foregroundStyle(Palette.ink)
+                    Text(cv.filename).atlasText(.bodyStrong).foregroundStyle(Color.canopy900)
                         .lineLimit(1).truncationMode(.middle)
-                    Text(byteCount(cv.byteSize)).atlasText(.caption).foregroundStyle(Palette.inkTertiary)
+                    Text(byteCount(cv.byteSize)).atlasText(.caption).foregroundStyle(Color.canopy400)
                 }
                 Spacer()
                 Button("Replace") { if Config.demoMode { picked = nil } else { importing = true } }
                     .font(.system(size: 15, weight: .semibold))
-                    .foregroundStyle(Palette.blue)
+                    .foregroundStyle(Color.canopy600)
             }
         }
     }
 
     private var linkField: some View {
         HStack(spacing: Space.s) {
-            Image(systemName: "link").font(.system(size: 15)).foregroundStyle(Palette.inkTertiary)
+            Image(systemName: "link").font(.system(size: 15)).foregroundStyle(Color.canopy400)
             TextField("Paste a link", text: $link)
                 .textInputAutocapitalization(.never)
                 .autocorrectionDisabled()
@@ -138,23 +139,23 @@ struct UploadCVView: View {
                 .submitLabel(.done)
                 .focused($linkFocused)
                 .font(.system(size: 16))
-                .foregroundStyle(Palette.ink)
+                .foregroundStyle(Color.canopy900)
         }
         .padding(.horizontal, Space.l)
         .frame(height: 54)
-        .background(Palette.card)
+        .background(Color.canopyPaperDeep)
         .clipShape(RoundedRectangle(cornerRadius: Radius.button, style: .continuous))
         .overlay(
             RoundedRectangle(cornerRadius: Radius.button, style: .continuous)
-                .strokeBorder(linkFocused ? Palette.blue : Palette.border, lineWidth: 1)
+                .strokeBorder(linkFocused ? Color.canopy600 : Color.canopyPaperLine, lineWidth: 1)
         )
     }
 
     private var orDivider: some View {
         HStack(spacing: Space.m) {
-            Rectangle().fill(Palette.border).frame(height: 1)
-            Text("or").atlasText(.caption).foregroundStyle(Palette.inkTertiary)
-            Rectangle().fill(Palette.border).frame(height: 1)
+            Rectangle().fill(Color.canopyPaperLine).frame(height: 1)
+            Text("or").atlasText(.caption).foregroundStyle(Color.canopy400)
+            Rectangle().fill(Color.canopyPaperLine).frame(height: 1)
         }
     }
 
