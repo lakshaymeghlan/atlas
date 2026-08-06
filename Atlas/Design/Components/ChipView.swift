@@ -11,15 +11,15 @@ struct ChipView: View {
     var body: some View {
         HStack(spacing: Space.xs) {
             if lowConfidence {
-                Circle().fill(Palette.blue).frame(width: 6, height: 6)
+                Circle().fill(Color.canopy600).frame(width: 6, height: 6)
             }
             Text(text)
                 .font(.system(size: 14, weight: .medium))
-                .foregroundStyle(selected ? Palette.blue : Palette.ink)
+                .foregroundStyle(selected ? Color.canopy600 : Color.canopy900)
         }
         .padding(.horizontal, Space.m)
         .padding(.vertical, Space.s)
-        .background(selected ? Palette.blueTint : Palette.chip)
+        .background(selected ? Color.canopyMist : Color.canopyMist)
         .clipShape(RoundedRectangle(cornerRadius: Radius.chip, style: .continuous))
     }
 }
@@ -32,5 +32,5 @@ struct ChipView: View {
     }
     .padding(Space.screen)
     .frame(maxWidth: .infinity)
-    .background(Palette.paper)
+    .background(Color.canopyPaper)
 }

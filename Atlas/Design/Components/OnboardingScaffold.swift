@@ -30,7 +30,8 @@ struct OnboardingScaffold<Content: View, Bottom: View>: View {
                 .padding(.bottom, Space.screen)
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
-        .atlasSky(height: 240, intensity: 0.7, maxClouds: 3)
+        .background(Color.canopyPaper.ignoresSafeArea())
+        .canopyGrain()
     }
 
     @ViewBuilder private var navBar: some View {
@@ -39,7 +40,7 @@ struct OnboardingScaffold<Content: View, Bottom: View>: View {
                 Button(action: onBack) {
                     Image(systemName: "chevron.left")
                         .font(.system(size: 17, weight: .semibold))
-                        .foregroundStyle(Palette.ink)
+                        .foregroundStyle(Color.canopy900)
                         .frame(width: 44, height: 44, alignment: .leading)
                 }
                 .accessibilityLabel("Back")
@@ -67,7 +68,7 @@ struct StageProgress: View {
         HStack(spacing: 6) {
             ForEach(0..<count, id: \.self) { i in
                 Capsule()
-                    .fill(i <= current ? Palette.blue : Palette.border)
+                    .fill(i <= current ? Color.canopy600 : Color.canopyPaperLine)
                     .frame(height: 4)
                     .frame(maxWidth: .infinity)
             }

@@ -61,6 +61,14 @@ final class AppRouter {
 
     func retryUpload() { go(.uploadCV) }
 
+    /// Back out of the CV step to Welcome — undoes the "begin" session so a
+    /// mistaken tap isn't a dead end (nothing's been entered yet).
+    func backToWelcome() {
+        auth.signOut()
+        profile.reset()
+        go(.welcome)
+    }
+
     func didConfirmProfile() {
         profile.completeOnboarding()
         go(.home)

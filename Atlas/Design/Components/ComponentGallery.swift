@@ -18,7 +18,7 @@ struct ComponentGallery: View {
                     Text("Display 34").atlasText(.display)
                     Text("Title 20").atlasText(.title)
                     Text("Body 15 — the quick brown fox jumps.").atlasText(.body)
-                        .foregroundStyle(Palette.inkSecondary)
+                        .foregroundStyle(Color.canopy600)
                     Eyebrow("META · SF MONO")
                 }
 
@@ -36,7 +36,7 @@ struct ComponentGallery: View {
                             Eyebrow("EXPERIENCE")
                             Text("Senior Engineer").atlasText(.bodyStrong)
                             Text("Acme · 2021 — Present").atlasText(.caption)
-                                .foregroundStyle(Palette.inkTertiary)
+                                .foregroundStyle(Color.canopy400)
                         }
                     }
                 }
@@ -52,13 +52,13 @@ struct ComponentGallery: View {
             }
             .padding(Space.screen)
         }
-        .background(Palette.paper)
+        .background(Color.canopyPaper)
     }
 
     @ViewBuilder
     private func section<C: View>(_ title: String, @ViewBuilder content: () -> C) -> some View {
         VStack(alignment: .leading, spacing: Space.m) {
-            Eyebrow(title, color: Palette.inkTertiary)
+            Eyebrow(title, color: Color.canopy400)
             content()
         }
     }

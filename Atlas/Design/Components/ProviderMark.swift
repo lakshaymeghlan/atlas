@@ -13,7 +13,7 @@ struct ProviderMark: View {
 
     var body: some View {
         glyph
-            .foregroundStyle(Palette.ink)
+            .foregroundStyle(Color.canopy900)
             .frame(width: 20, height: 20)
             .accessibilityHidden(true)
     }
@@ -35,5 +35,5 @@ struct ProviderMark: View {
         ProviderMark(.github)
     }
     .padding()
-    .background(Palette.paper)
+    .background(Color.canopyPaper)
 }
