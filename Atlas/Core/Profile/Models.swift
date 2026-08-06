@@ -146,6 +146,8 @@ struct UserProfile: Codable, Equatable {
     var languages: [Language] = []
     /// Roles the person is looking for (typed + picked on the roles step).
     var desiredRoles: [String] = []
+    /// What they want from their next move — set in the preferences wizard.
+    var preferences = JobPreferences()
     /// A portfolio / profile link they gave instead of (or with) a CV.
     var portfolioURL: String?
     /// Optional, reversible connectors — nil until the person connects them.

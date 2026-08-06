@@ -103,6 +103,9 @@ struct CanopyPath: View {
     var crownProgress: CGFloat = 1
     var nodesRevealed: [Bool] = [true, true, true]
     var completed: Set<Int> = []
+    /// A single node highlighted with `sun` — a warm focal point (the one place
+    /// amber rests on an otherwise-green screen).
+    var active: Int? = nil
 
     /// The waypoints, alternating sides. Order is the journey order.
     static let nodes: [CanopyNode] = [
@@ -164,13 +167,15 @@ struct CanopyPath: View {
         }
     }
 
-    // A node: mist fill, canopy stroke. Completed nodes fill with sun (rail).
+    // A node: mist fill, canopy stroke. Completed (rail) or the active hero node
+    // fills with sun — the warm accent.
     private func nodeDot(index: Int) -> some View {
-        let done = completed.contains(index)
+        let warm = completed.contains(index) || index == active
         return Circle()
-            .fill(done ? Color.sun : Color.canopyMist)
+            .fill(warm ? Color.sun : Color.canopyMist)
             .frame(width: 18, height: 18)
-            .overlay(Circle().strokeBorder(done ? Color.sun : Color.canopy600, lineWidth: 1.5))
+            .overlay(Circle().strokeBorder(warm ? Color.sunDeep : Color.canopy600, lineWidth: 1.5))
+            .shadow(color: warm ? Color.sun.opacity(0.5) : .clear, radius: 5)
     }
 
     // The crown: a few branches fanning up, with leaves clustered along them.

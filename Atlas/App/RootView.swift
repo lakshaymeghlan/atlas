@@ -22,13 +22,22 @@ struct RootView: View {
             Color.clear
         case .welcome:
             WelcomeView(onBegin: router.didBegin)
+        case .chooseIntent:
+            ChooseIntentView(onExplore: router.chooseExplore,
+                             onJoinCompany: router.chooseCompany,
+                             onBack: router.backToWelcome)
         case .uploadCV:
-            UploadCVView(onContinue: router.didPickSource, onBack: router.backToWelcome)
+            UploadCVView(onContinue: router.didPickSource,
+                         onSetLinkedIn: router.setLinkedIn,
+                         onBack: router.backToIntent)
         case .analysing(let source):
             AnalysingView(source: source,
                           onFinished: router.parsingSucceeded,
                           onRetry: router.retryUpload,
                           onManualEntry: router.enterManualEntry)
+        case .preferences:
+            PreferencesFlowView(onComplete: router.preferencesCompleted,
+                                onBackToUpload: router.retryUpload)
         case .rolePreferences:
             RolePreferencesView(onContinue: router.didChooseRoles)
         case .confirmProfile:
@@ -44,11 +53,13 @@ struct RootView: View {
         switch router.state {
         case .launching: return 0
         case .welcome: return 1
-        case .uploadCV: return 2
-        case .analysing: return 3
-        case .rolePreferences: return 4
-        case .confirmProfile: return 5
-        case .home: return 6
+        case .chooseIntent: return 2
+        case .uploadCV: return 3
+        case .analysing: return 4
+        case .preferences: return 5
+        case .rolePreferences: return 6
+        case .confirmProfile: return 7
+        case .home: return 8
         }
     }
 }

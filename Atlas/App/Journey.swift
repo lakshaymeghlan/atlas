@@ -3,8 +3,9 @@ import Foundation
 /// The onboarding journey. The stage titles feed the progress indicator on every
 /// onboarding screen and are shared so the labels never drift.
 enum Journey {
-    /// The three visible stages, in order. Welcome sits before stage 0.
-    static let stageTitles = ["upload", "roles", "confirm"]
+    /// Total onboarding steps, for the progress bar: upload (0) · six preference
+    /// steps (1–6) · profile review (7).
+    static let onboardingSteps = 8
 }
 
 /// A CV the user picked from Files. In the prototype the bytes ride along in
@@ -19,12 +20,12 @@ struct PickedCV: Equatable {
 /// the same extraction step (the real backend reads either; the mock ignores it).
 enum CVSource: Equatable {
     case file(PickedCV)
-    case link(String)
+    case linkedIn
 
     var displayName: String {
         switch self {
         case .file(let cv): return cv.filename
-        case .link(let url): return url
+        case .linkedIn: return "LinkedIn"
         }
     }
 }
@@ -33,8 +34,10 @@ enum CVSource: Equatable {
 enum JourneyState: Equatable {
     case launching
     case welcome
+    case chooseIntent
     case uploadCV
     case analysing(source: CVSource)
+    case preferences
     case rolePreferences
     case confirmProfile
     case home

@@ -11,7 +11,7 @@ struct OnboardingScaffold<Content: View, Bottom: View>: View {
     var body: some View {
         VStack(spacing: 0) {
             navBar
-            StageProgress(current: stageIndex, count: Journey.stageTitles.count)
+            StageProgress(current: stageIndex, count: Journey.onboardingSteps)
                 .padding(.horizontal, Space.screen)
                 .padding(.bottom, Space.l)
 
