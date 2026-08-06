@@ -44,7 +44,7 @@ struct ProfileView: View {
                         Button(action: onSignOut) {
                             Text("Sign out")
                                 .font(.system(size: 15, weight: .semibold))
-                                .foregroundStyle(Palette.inkSecondary)
+                                .foregroundStyle(Color.canopy600)
                                 .frame(maxWidth: .infinity, minHeight: 44)
                         }
                         .padding(.top, Space.s)
@@ -65,7 +65,7 @@ struct ProfileView: View {
             Button(action: { onClose?() }) {
                 Image(systemName: "chevron.left")
                     .font(.system(size: 17, weight: .semibold))
-                    .foregroundStyle(Palette.ink)
+                    .foregroundStyle(Color.canopy900)
                     .frame(width: 44, height: 44, alignment: .leading)
             }
             .accessibilityLabel("Back")
@@ -78,19 +78,19 @@ struct ProfileView: View {
     private var header: some View {
         HStack(spacing: Space.l) {
             Circle()
-                .fill(Palette.blueTint)
+                .fill(Color.canopyMist)
                 .frame(width: 62, height: 62)
                 .overlay(
                     Text(initials(p.fullName))
                         .font(.system(size: 22, weight: .semibold))
-                        .foregroundStyle(Palette.blue)
+                        .foregroundStyle(Color.canopy600)
                 )
             VStack(alignment: .leading, spacing: 3) {
                 Text(p.fullName ?? "You")
                     .font(.system(size: 25, weight: .bold))
-                    .foregroundStyle(Palette.ink)
+                    .foregroundStyle(Color.canopy900)
                 if let headline = p.headline {
-                    Text(headline).atlasText(.body).foregroundStyle(Palette.inkSecondary)
+                    Text(headline).atlasText(.body).foregroundStyle(Color.canopy600)
                         .fixedSize(horizontal: false, vertical: true)
                 }
                 HStack(spacing: Space.m) {
@@ -127,8 +127,8 @@ struct ProfileView: View {
                 connectedHeader("GITHUB") { store.disconnectGitHub() }
                 ContributionGraph(seed: 7)
                 Text("\(gh.contributionsLastYear.formatted()) contributions in the last year")
-                    .atlasText(.caption).foregroundStyle(Palette.inkTertiary)
-                Rectangle().fill(Palette.border).frame(height: 1).padding(.vertical, Space.xs)
+                    .atlasText(.caption).foregroundStyle(Color.canopy400)
+                Rectangle().fill(Color.canopyPaperLine).frame(height: 1).padding(.vertical, Space.xs)
                 HStack(spacing: 0) {
                     stat(abbrev(gh.repoCount), "Repos")
                     statDivider
@@ -155,14 +155,14 @@ struct ProfileView: View {
                 Eyebrow("REPOSITORIES")
                 Spacer()
                 Text("\(gh.pinnedProjects.count)/3 pinned")
-                    .atlasText(.meta).foregroundStyle(Palette.inkTertiary)
+                    .atlasText(.meta).foregroundStyle(Color.canopy400)
             }
             AtlasCard(padding: 0) {
                 VStack(spacing: 0) {
                     ForEach(Array(gh.projects.enumerated()), id: \.element.id) { i, project in
                         repoRow(project, canPin: gh.pinnedProjects.count < 3)
                         if i < gh.projects.count - 1 {
-                            Rectangle().fill(Palette.border).frame(height: 1)
+                            Rectangle().fill(Color.canopyPaperLine).frame(height: 1)
                                 .padding(.leading, Space.l)
                         }
                     }
@@ -176,14 +176,14 @@ struct ProfileView: View {
             VStack(alignment: .leading, spacing: Space.s) {
                 HStack {
                     repoGlyph
-                    Text(project.name).atlasText(.bodyStrong).foregroundStyle(Palette.ink)
+                    Text(project.name).atlasText(.bodyStrong).foregroundStyle(Color.canopy900)
                     Spacer()
                     Image(systemName: "pin.fill")
                         .font(.system(size: 12))
-                        .foregroundStyle(Palette.blue)
+                        .foregroundStyle(Color.canopy600)
                 }
                 if let d = project.description {
-                    Text(d).atlasText(.caption).foregroundStyle(Palette.inkSecondary)
+                    Text(d).atlasText(.caption).foregroundStyle(Color.canopy600)
                         .fixedSize(horizontal: false, vertical: true)
                 }
                 projectMeta(project)
@@ -194,9 +194,9 @@ struct ProfileView: View {
     private func repoRow(_ project: GitHubProject, canPin: Bool) -> some View {
         HStack(spacing: Space.m) {
             VStack(alignment: .leading, spacing: 5) {
-                Text(project.name).atlasText(.bodyStrong).foregroundStyle(Palette.ink)
+                Text(project.name).atlasText(.bodyStrong).foregroundStyle(Color.canopy900)
                 if let d = project.description {
-                    Text(d).atlasText(.caption).foregroundStyle(Palette.inkTertiary).lineLimit(1)
+                    Text(d).atlasText(.caption).foregroundStyle(Color.canopy400).lineLimit(1)
                 }
                 projectMeta(project)
             }
@@ -206,7 +206,7 @@ struct ProfileView: View {
             } label: {
                 Image(systemName: project.pinned ? "pin.fill" : "pin")
                     .font(.system(size: 15))
-                    .foregroundStyle(project.pinned ? Palette.blue : Palette.inkTertiary)
+                    .foregroundStyle(project.pinned ? Color.canopy600 : Color.canopy400)
                     .frame(width: 44, height: 44)
             }
             .opacity(project.pinned || canPin ? 1 : 0.35)
@@ -223,7 +223,7 @@ struct ProfileView: View {
             if let lang = project.language {
                 HStack(spacing: 5) {
                     Circle().fill(langColor(lang)).frame(width: 9, height: 9)
-                    Text(lang).atlasText(.caption).foregroundStyle(Palette.inkSecondary)
+                    Text(lang).atlasText(.caption).foregroundStyle(Color.canopy600)
                 }
             }
             metaLabel("star", "\(project.stars)")
@@ -240,9 +240,9 @@ struct ProfileView: View {
                 HStack(spacing: Space.m) {
                     monogram(e.company)
                     VStack(alignment: .leading, spacing: 2) {
-                        Text(e.role).atlasText(.bodyStrong).foregroundStyle(Palette.ink)
+                        Text(e.role).atlasText(.bodyStrong).foregroundStyle(Color.canopy900)
                         Text("\(e.company) · \(dateRange(e.startDate, e.endDate))")
-                            .atlasText(.caption).foregroundStyle(Palette.inkSecondary)
+                            .atlasText(.caption).foregroundStyle(Color.canopy600)
                     }
                     Spacer()
                 }
@@ -255,10 +255,10 @@ struct ProfileView: View {
             ForEach(Array(p.education.enumerated()), id: \.element.id) { i, e in
                 if i > 0 { rowDivider }
                 VStack(alignment: .leading, spacing: 2) {
-                    Text(e.institution).atlasText(.bodyStrong).foregroundStyle(Palette.ink)
+                    Text(e.institution).atlasText(.bodyStrong).foregroundStyle(Color.canopy900)
                     Text([e.degree, e.field].compactMap { $0 }.joined(separator: ", ")
                          + years(e.startYear, e.endYear))
-                        .atlasText(.caption).foregroundStyle(Palette.inkSecondary)
+                        .atlasText(.caption).foregroundStyle(Color.canopy600)
                 }
             }
         }
@@ -288,9 +288,9 @@ struct ProfileView: View {
                 ForEach(p.desiredRoles, id: \.self) { role in
                     Text(role)
                         .font(.system(size: 14, weight: .medium))
-                        .foregroundStyle(Palette.blue)
+                        .foregroundStyle(Color.canopy600)
                         .padding(.vertical, 8).padding(.horizontal, 13)
-                        .background(Capsule().fill(Palette.blueTint))
+                        .background(Capsule().fill(Color.canopyMist))
                 }
             }
         }
@@ -305,7 +305,7 @@ struct ProfileView: View {
                     Spacer(minLength: 0)
                     Image(systemName: "arrow.up.right").font(.system(size: 12, weight: .semibold))
                 }
-                .foregroundStyle(Palette.blue)
+                .foregroundStyle(Color.canopy600)
             }
         }
     }
@@ -318,7 +318,7 @@ struct ProfileView: View {
             Spacer()
             Button("Disconnect") { withAnimation(.easeInOut(duration: 0.25)) { disconnect() } }
                 .font(.system(size: 12, weight: .medium))
-                .foregroundStyle(Palette.inkTertiary)
+                .foregroundStyle(Color.canopy400)
         }
     }
 
@@ -331,18 +331,18 @@ struct ProfileView: View {
         } label: {
             AtlasCard(padding: Space.l) {
                 HStack(spacing: Space.m) {
-                    BrandMarkView(mark: mark, size: 34, monoColor: Palette.ink)
+                    BrandMarkView(mark: mark, size: 34, monoColor: Color.canopy900)
                     VStack(alignment: .leading, spacing: 2) {
                         Text(isLinkedIn ? "Connect LinkedIn" : "Connect GitHub")
-                            .atlasText(.bodyStrong).foregroundStyle(Palette.ink)
+                            .atlasText(.bodyStrong).foregroundStyle(Color.canopy900)
                         Text(isLinkedIn ? "Add your network and activity."
                                         : "Show your contributions and projects.")
-                            .atlasText(.caption).foregroundStyle(Palette.inkSecondary)
+                            .atlasText(.caption).foregroundStyle(Color.canopy600)
                     }
                     Spacer(minLength: Space.s)
                     Text("Connect")
                         .font(.system(size: 14, weight: .semibold))
-                        .foregroundStyle(Palette.blue)
+                        .foregroundStyle(Color.canopy600)
                 }
             }
         }
@@ -362,18 +362,18 @@ struct ProfileView: View {
 
     private func stat(_ value: String, _ label: String) -> some View {
         VStack(spacing: 4) {
-            Text(value).font(.system(size: 22, weight: .semibold)).foregroundStyle(Palette.ink)
-            Text(label).atlasText(.meta).foregroundStyle(Palette.inkTertiary)
+            Text(value).font(.system(size: 22, weight: .semibold)).foregroundStyle(Color.canopy900)
+            Text(label).atlasText(.meta).foregroundStyle(Color.canopy400)
         }
         .frame(maxWidth: .infinity)
     }
 
     private var statDivider: some View {
-        Rectangle().fill(Palette.border).frame(width: 1, height: 30)
+        Rectangle().fill(Color.canopyPaperLine).frame(width: 1, height: 30)
     }
 
     private var rowDivider: some View {
-        Rectangle().fill(Palette.border).frame(height: 1).padding(.vertical, Space.xs)
+        Rectangle().fill(Color.canopyPaperLine).frame(height: 1).padding(.vertical, Space.xs)
     }
 
     private func metaLabel(_ symbol: String, _ text: String) -> some View {
@@ -381,23 +381,23 @@ struct ProfileView: View {
             Image(systemName: symbol).font(.system(size: 11, weight: .regular))
             Text(text).atlasText(.caption)
         }
-        .foregroundStyle(Palette.inkTertiary)
+        .foregroundStyle(Color.canopy400)
     }
 
     private var repoGlyph: some View {
         Image(systemName: "chevron.left.forwardslash.chevron.right")
             .font(.system(size: 13, weight: .semibold))
-            .foregroundStyle(Palette.inkSecondary)
+            .foregroundStyle(Color.canopy600)
     }
 
     private func monogram(_ name: String) -> some View {
         RoundedRectangle(cornerRadius: Radius.chip, style: .continuous)
-            .fill(Palette.chip)
+            .fill(Color.canopyMist)
             .frame(width: 38, height: 38)
             .overlay(
                 Text(String(name.prefix(1)).uppercased())
                     .font(.system(size: 16, weight: .semibold))
-                    .foregroundStyle(Palette.inkSecondary)
+                    .foregroundStyle(Color.canopy600)
             )
     }
 
@@ -433,7 +433,7 @@ struct ProfileView: View {
         case "Shell": return Color(hex: "89E051")
         case "Metal": return Color(hex: "8E7BEF")
         case "Python": return Color(hex: "3572A5")
-        default: return Palette.inkTertiary
+        default: return Color.canopy400
         }
     }
 }

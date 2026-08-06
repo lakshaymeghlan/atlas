@@ -21,7 +21,7 @@ struct RiverCanvas: View {
             } else {
                 water
             }
-            Eyebrow(currentPhrase, color: Palette.blue)
+            Eyebrow(currentPhrase, color: Color.canopy600)
                 .id(currentPhrase)
                 .transition(.opacity)
                 .padding(.horizontal, Space.screen)
@@ -101,7 +101,7 @@ struct RiverCanvas: View {
                 phase: phase
             )
             ctx.fill(RiverShapes.fillPath(pts, size: size),
-                     with: .color(Palette.blue.opacity(wave.opacity)))
+                     with: .color(Color.canopy600.opacity(wave.opacity)))
         }
     }
 
@@ -114,7 +114,7 @@ struct RiverCanvas: View {
         let pts = RiverShapes.points(width: size.width, midY: midY, amplitude: wave.amplitude,
                                      wavelengths: wave.cycles, phase: phase)
         let path = RiverShapes.smoothPath(pts)
-        ctx.stroke(path, with: .color(Palette.blue.opacity(0.28)),
+        ctx.stroke(path, with: .color(Color.canopy600.opacity(0.28)),
                    style: StrokeStyle(lineWidth: 1.5, lineCap: .round))
         ctx.stroke(path.applying(.init(translationX: 0, y: -1)),
                    with: .color(.white.opacity(0.4)), style: StrokeStyle(lineWidth: 1, lineCap: .round))
@@ -168,7 +168,7 @@ struct RiverCanvas: View {
             let opacity = max(0, 1 - progress) * 0.6
             let rect = CGRect(x: x, y: y, width: p.width, height: 2)
             ctx.fill(Path(roundedRect: rect, cornerRadius: 1),
-                     with: .color(Palette.blue.opacity(opacity)))
+                     with: .color(Color.canopy600.opacity(opacity)))
         }
     }
 }
@@ -182,15 +182,15 @@ private struct ReducedRiver: View {
             let band = geo.size.height * 0.15 // three bands = lower 45%
             VStack(spacing: 0) {
                 Spacer(minLength: 0)
-                Rectangle().fill(Palette.blue.opacity(0.08)).frame(height: band)
-                Rectangle().fill(Palette.blue.opacity(0.12)).frame(height: band)
-                Rectangle().fill(Palette.blue.opacity(0.16)).frame(height: band)
+                Rectangle().fill(Color.canopy600.opacity(0.08)).frame(height: band)
+                Rectangle().fill(Color.canopy600.opacity(0.12)).frame(height: band)
+                Rectangle().fill(Color.canopy600.opacity(0.16)).frame(height: band)
             }
             .frame(width: geo.size.width, height: geo.size.height)
         }
         .overlay {
             Circle()
-                .fill(Palette.blue)
+                .fill(Color.canopy600)
                 .frame(width: 12, height: 12)
                 .opacity(pulse ? 1 : 0.35)
                 .offset(y: -40)
@@ -208,7 +208,7 @@ private struct ReducedRiver: View {
         @State private var long = false
         var body: some View {
             ZStack {
-                Palette.paper.ignoresSafeArea()
+                Color.canopyPaper.ignoresSafeArea()
                 RiverCanvas(isLongRunning: long)
                 VStack {
                     Toggle("Long running", isOn: $long).padding(Space.screen)

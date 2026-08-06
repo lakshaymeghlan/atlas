@@ -7,7 +7,7 @@ struct RootView: View {
 
     var body: some View {
         ZStack {
-            Palette.paper.ignoresSafeArea()
+            Color.canopyPaper.ignoresSafeArea()
             content
                 .id(stateID)
                 .transition(Motion.screenTransition)
@@ -23,7 +23,7 @@ struct RootView: View {
         case .welcome:
             WelcomeView(onBegin: router.didBegin)
         case .uploadCV:
-            UploadCVView(onContinue: router.didPickSource)
+            UploadCVView(onContinue: router.didPickSource, onBack: router.backToWelcome)
         case .analysing(let source):
             AnalysingView(source: source,
                           onFinished: router.parsingSucceeded,

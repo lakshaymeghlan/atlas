@@ -18,64 +18,50 @@ extension Color {
     }
 }
 
-/// The full Canopy palette — cool, calm ocean. These are the only colours in the app.
-enum Palette {
-    // Surface
-    static let paper = Color(hex: "F3FAFB")
-    static let card = Color(hex: "FFFFFF")
-    static let border = Color(hex: "DCE8EA")
-    static let chip = Color(hex: "E8F3F5")
-
-    // Ink — deep sea, not pure black
-    static let ink = Color(hex: "0C2A31")
-    static let inkSecondary = Color(hex: "4E6B72")
-    static let inkTertiary = Color(hex: "8AA4AB")
-
-    // Action — ocean cerulean, the app's one saturated colour
-    static let blue = Color(hex: "0E86A8")
-    static let bluePressed = Color(hex: "0A6C8A")
-    static let blueTint = Color(hex: "DFF2F6")
-
-    // Status — used almost never
-    static let success = Color(hex: "1F9E86")
-    static let error = Color(hex: "C0392B")
-}
+// Colour lives in one place only — `Color.canopy*` (see DesignSystem/CanopyColor.swift,
+// backed by asset-catalog colour sets). There is no colour token type here by design.
 
 // MARK: - Type
 
-/// The three type roles: Display (headlines), Interface (SF Pro, body/UI),
-/// Meta (SF Mono, uppercase eyebrows and measured numbers).
+/// The Canopy type roles. Display is Instrument Serif (headlines + wordmark);
+/// everything else is Geist Sans at 400/500. Fixed scale — 40/30/22/17/15/13,
+/// nothing between. Meta is the one uppercase, tracked eyebrow.
 enum TextRole {
     case displayLarge, display, title, body, bodyStrong, caption, meta
 }
 
 extension TextRole {
-    /// General Sans if the .otf is installed (see DECISIONS.md); SwiftUI falls
-    /// back to SF Pro Display automatically when the custom font is absent.
-    private static let displayFace = "GeneralSans-Bold"
-
-    /// Fonts scale with Dynamic Type. The SF Pro roles map to semantic text
-    /// styles whose default sizes match the spec exactly (title3 20, subheadline
-    /// 15, footnote 13, caption2 11); the display faces use `relativeTo` so the
-    /// custom font (or its SF Pro fallback) scales too.
-    var font: Font {
+    /// Point size for the role, from the fixed scale.
+    var size: CGFloat {
         switch self {
-        case .displayLarge: return .custom(Self.displayFace, size: 42, relativeTo: .largeTitle).weight(.bold)
-        case .display:      return .custom(Self.displayFace, size: 34, relativeTo: .largeTitle).weight(.bold)
-        case .title:        return .system(.title3, design: .default).weight(.semibold)
-        case .body:         return .system(.subheadline, design: .default)
-        case .bodyStrong:   return .system(.subheadline, design: .default).weight(.semibold)
-        case .caption:      return .system(.footnote, design: .default)
-        case .meta:         return .system(.caption2, design: .monospaced).weight(.medium)
+        case .displayLarge: return 40
+        case .display:      return 30
+        case .title:        return 22
+        case .body:         return 17
+        case .bodyStrong:   return 17
+        case .caption:      return 15
+        case .meta:         return 13
         }
     }
 
-    /// Letter spacing in points (converted from the em values in the spec).
+    var font: Font {
+        switch self {
+        case .displayLarge, .display, .title:
+            return Typeface.display(size)                 // Instrument Serif
+        case .bodyStrong:
+            return Typeface.body(size, weight: .medium)   // Geist Medium
+        case .body, .caption, .meta:
+            return Typeface.body(size)                    // Geist Regular
+        }
+    }
+
+    /// Letter spacing in points. Serif display settles slightly tight; meta is
+    /// the wide uppercase eyebrow (+0.14em @ 13).
     var tracking: CGFloat {
         switch self {
-        case .displayLarge: return -1.26 // -0.03em @ 42
-        case .display:      return -1.02 // -0.03em @ 34
-        case .meta:         return 1.98  // +0.18em @ 11
+        case .displayLarge: return -0.6
+        case .display:      return -0.4
+        case .meta:         return 1.8
         default:            return 0
         }
     }
@@ -83,13 +69,13 @@ extension TextRole {
     /// Additional spacing between lines (target line-height minus font size).
     var lineSpacing: CGFloat {
         switch self {
-        case .displayLarge: return 2  // 44 line / 42
-        case .display:      return 2  // 36 / 34
-        case .title:        return 6  // 26 / 20
-        case .body:         return 8  // 23 / 15
-        case .bodyStrong:   return 8
-        case .caption:      return 5  // 18 / 13
-        case .meta:         return 3  // 14 / 11
+        case .displayLarge: return 3
+        case .display:      return 3
+        case .title:        return 4
+        case .body:         return 7
+        case .bodyStrong:   return 7
+        case .caption:      return 5
+        case .meta:         return 2
         }
     }
 
@@ -108,26 +94,37 @@ private struct AtlasTextStyle: ViewModifier {
 }
 
 extension View {
-    /// Apply an Atlas type role. Headlines still need explicit `\n` +
+    /// Apply a Canopy type role. Headlines still need explicit `\n` +
     /// `.fixedSize(horizontal: false, vertical: true)` at the call site.
     func atlasText(_ role: TextRole) -> some View {
         modifier(AtlasTextStyle(role: role))
     }
 }
 
-/// Display typeface with a graceful fallback. Drop a real editorial face (e.g.
-/// General Sans) into `Resources/Fonts/` + register it in project.yml's
-/// `UIAppFonts`, and it activates automatically; until then it renders as SF Pro
-/// at the requested weight — so the layout is identical either way.
+/// The two Canopy faces, each with a graceful system fallback. Drop
+/// `InstrumentSerif-Regular` and `Geist-Regular/-Medium` into `Resources/Fonts/`
+/// and register them in project.yml's `UIAppFonts`; until then Display renders as
+/// the system serif and Body as SF, so the layout is identical either way.
 enum Typeface {
-    /// PostScript name of the display face to prefer once installed.
-    static let displayName = "GeneralSans-Semibold"
+    static let displayName = "InstrumentSerif-Regular"
+    static let bodyName = "Geist-Regular"
+    static let bodyMediumName = "Geist-Medium"
 
-    static func display(_ size: CGFloat, weight: Font.Weight = .semibold) -> Font {
+    /// Instrument Serif (regular only) for headlines and the wordmark.
+    static func display(_ size: CGFloat) -> Font {
         if UIFont(name: displayName, size: size) != nil {
             return .custom(displayName, size: size)
         }
-        return .system(size: size, weight: weight)
+        return .system(size: size, weight: .regular, design: .serif)
+    }
+
+    /// Geist Sans for body/UI — regular and medium only.
+    static func body(_ size: CGFloat, weight: Font.Weight = .regular) -> Font {
+        let name = weight == .medium ? bodyMediumName : bodyName
+        if UIFont(name: name, size: size) != nil {
+            return .custom(name, size: size)
+        }
+        return .system(size: size, weight: weight, design: .default)
     }
 }
 
@@ -152,9 +149,9 @@ enum Radius {
 }
 
 extension View {
-    /// The one and only card shadow: ink @ 4%, radius 12, y 4.
+    /// The one and only card shadow: canopy shade @ 4%, radius 12, y 4.
     func atlasCardShadow() -> some View {
-        shadow(color: Palette.ink.opacity(0.04), radius: 12, x: 0, y: 4)
+        shadow(color: Color.canopy900.opacity(0.04), radius: 12, x: 0, y: 4)
     }
 }
 

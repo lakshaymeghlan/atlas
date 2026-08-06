@@ -21,11 +21,11 @@ struct AtlasCard<Content: View>: View {
                 Eyebrow("EDUCATION")
                 Text("A card").atlasText(.title)
                 Text("With some body copy inside it.").atlasText(.body)
-                    .foregroundStyle(Palette.inkSecondary)
+                    .foregroundStyle(Color.canopy600)
             }
         }
     }
     .padding(Space.screen)
     .frame(maxHeight: .infinity)
-    .background(Palette.paper)
+    .background(Color.canopyPaper)
 }

@@ -44,32 +44,32 @@ private struct AtlasButtonStyle: ButtonStyle {
             .frame(maxWidth: .infinity, minHeight: 56)
             .padding(.horizontal, Space.l)
             .background(shape.fill(fill(pressed: pressed)))
-            .overlay(kind == .secondary ? shape.strokeBorder(Palette.border, lineWidth: 1) : nil)
+            .overlay(kind == .secondary ? shape.strokeBorder(Color.canopyPaperLine, lineWidth: 1) : nil)
             .clipShape(shape)
             .shadow(color: shadowColor, radius: pressed ? 5 : 13, x: 0, y: pressed ? 2 : 6)
             .scaleEffect(pressed ? 0.985 : 1)
             .animation(.spring(response: 0.32, dampingFraction: 0.72), value: pressed)
     }
 
-    // Primary = solid ink; secondary = white with a hairline. One clean family.
+    // Primary = solid canopy shade; secondary = paper with a hairline.
     private var labelColor: Color {
-        guard isEnabled else { return Palette.inkTertiary }
-        return kind == .primary ? .white : Palette.ink
+        guard isEnabled else { return Color.canopy400 }
+        return kind == .primary ? .canopyPaper : Color.canopy900
     }
 
     private func fill(pressed: Bool) -> Color {
         switch kind {
         case .primary:
-            if !isEnabled { return Palette.border }
-            return pressed ? Color(hex: "2A2A2E") : Palette.ink
+            if !isEnabled { return Color.canopyPaperLine }
+            return pressed ? Color.canopy900 : Color.canopy800
         case .secondary:
-            return pressed ? Palette.chip : .white
+            return pressed ? Color.canopyMist : .canopyPaper
         }
     }
 
     private var shadowColor: Color {
         guard isEnabled else { return .clear }
-        return kind == .primary ? Palette.ink.opacity(0.18) : .black.opacity(0.05)
+        return kind == .primary ? Color.canopy900.opacity(0.18) : .canopy900.opacity(0.05)
     }
 }
 
@@ -84,5 +84,5 @@ private struct AtlasButtonStyle: ButtonStyle {
     }
     .padding(Space.screen)
     .frame(maxHeight: .infinity)
-    .background(Palette.paper)
+    .background(Color.canopyPaper)
 }
