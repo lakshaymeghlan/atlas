@@ -8,8 +8,10 @@ import os
 @Observable
 final class JobsStore {
     var matches: [JobMatch] = JobMatch.samples
-    /// Bookmarked roles — independent of pass/accept, shown on the Saved tab.
+    /// Bookmarked roles — independent of pass/accept.
     var saved: [JobMatch] = []
+    /// Companies you're in the pipeline with — shown on the Journey tab.
+    var applications: [Application] = Application.samples
 
     private let log = Logger(subsystem: "ai.sofsuite.atlas", category: "jobs")
 
@@ -27,10 +29,14 @@ final class JobsStore {
         matches.removeAll { $0.id == id }
     }
 
-    /// Accept a match. `note` is an optional message to the company.
+    /// Accept a match. `note` is an optional message to the company. Adds the
+    /// company to your Journey at the "Applied" stage.
     func accept(_ id: UUID, note: String?) {
         guard let match = matches.first(where: { $0.id == id }) else { return }
         matches.removeAll { $0.id == id }
+        if !applications.contains(where: { $0.id == id }) {
+            applications.insert(Application(match: match, stage: .applied), at: 0)
+        }
         log.info("Accepted \(match.role, privacy: .public) @ \(match.company, privacy: .public); note: \(note != nil ? "yes" : "no", privacy: .public)")
     }
 }

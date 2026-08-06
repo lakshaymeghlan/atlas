@@ -19,14 +19,14 @@ struct ConfirmProfileView: View {
     var body: some View {
         @Bindable var store = store
 
-        return OnboardingScaffold(stageIndex: 2) {
+        return OnboardingScaffold(stageIndex: 7) {
             VStack(alignment: .leading, spacing: Space.l) {
-                Eyebrow("CONFIRM PROFILE · 3 OF 3")
-                Text("Here's what\nwe found.")
+                Eyebrow("YOUR PROFILE · 8 OF 8")
+                Text("We've built\nyour profile.")
                     .atlasText(.display)
                     .foregroundStyle(Color.canopy900)
                     .fixedSize(horizontal: false, vertical: true)
-                Text("Tap any card to edit.")
+                Text("Take a look — tap any card to edit.")
                     .atlasText(.body)
                     .foregroundStyle(Color.canopy600)
             }
