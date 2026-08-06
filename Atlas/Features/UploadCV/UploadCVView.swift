@@ -2,17 +2,19 @@ import SwiftUI
 import UniformTypeIdentifiers
 import os
 
-/// S03 · Add your CV or a link. Upload a PDF/DOCX, or paste a portfolio / profile
-/// URL — Canopy reads either and builds the profile. Works for any field.
+/// S03 · Bring your experience in. Upload a CV/portfolio file, connect LinkedIn,
+/// or both — Canopy reads whatever you give it and builds the profile. The two
+/// inputs are independent (not either/or); Continue unlocks once at least one is
+/// provided.
 struct UploadCVView: View {
     var onContinue: (CVSource) -> Void
+    var onSetLinkedIn: (Bool) -> Void = { _ in }
     var onBack: (() -> Void)? = nil
 
     @State private var picked: PickedCV?
-    @State private var link: String = ""
+    @State private var linkedInConnected = false
     @State private var validationError: CVValidation.Failure?
     @State private var importing = false
-    @FocusState private var linkFocused: Bool
 
     private let log = Logger(subsystem: "ai.sofsuite.atlas", category: "upload")
 
@@ -22,18 +24,17 @@ struct UploadCVView: View {
         return types
     }()
 
-    private var trimmedLink: String { link.trimmingCharacters(in: .whitespacesAndNewlines) }
-    private var canContinue: Bool { picked != nil || !trimmedLink.isEmpty }
+    private var canContinue: Bool { picked != nil || linkedInConnected }
 
     var body: some View {
         OnboardingScaffold(stageIndex: 0, onBack: onBack) {
             VStack(alignment: .leading, spacing: Space.l) {
-                Eyebrow("YOUR STORY · 1 OF 3")
-                Text("Add your CV\nor portfolio.")
+                Eyebrow("YOUR STORY · 1 OF 8")
+                Text("Bring your\nexperience in.")
                     .atlasText(.display)
                     .foregroundStyle(Color.canopy900)
                     .fixedSize(horizontal: false, vertical: true)
-                Text("Canopy reads it and builds your profile — no forms. Upload a file, or paste a link to your CV or portfolio.")
+                Text("Canopy reads it and builds your profile — no forms. Add your CV, connect LinkedIn, or do both.")
                     .atlasText(.body)
                     .foregroundStyle(Color.canopy600)
             }
@@ -49,22 +50,14 @@ struct UploadCVView: View {
                         .atlasText(.caption)
                         .foregroundStyle(Color.sunDeep)
                 }
-            }
-
-            orDivider
-
-            VStack(alignment: .leading, spacing: Space.s) {
-                linkField
-                Text("A CV or portfolio link — personal site, Behance, Dribbble, Google Scholar. Canopy reads it.")
-                    .atlasText(.caption)
-                    .foregroundStyle(Color.canopy400)
+                linkedInCard
             }
         } bottom: {
             AtlasButton("Continue →", isEnabled: canContinue) {
                 if let picked {
                     onContinue(.file(picked))
-                } else if !trimmedLink.isEmpty {
-                    onContinue(.link(trimmedLink))
+                } else if linkedInConnected {
+                    onContinue(.linkedIn)
                 }
             }
         }
@@ -74,7 +67,7 @@ struct UploadCVView: View {
                       onCompletion: handleImport)
     }
 
-    // MARK: Drop zone / file row
+    // MARK: Upload
 
     private var dropZone: some View {
         Button {
@@ -98,7 +91,7 @@ struct UploadCVView: View {
                 Text("PDF or DOCX · tap to browse").atlasText(.caption).foregroundStyle(Color.canopy400)
             }
             .frame(maxWidth: .infinity)
-            .frame(height: 170)
+            .frame(height: 160)
             .background(Color.canopyPaperDeep)
             .clipShape(RoundedRectangle(cornerRadius: Radius.card, style: .continuous))
             .overlay(
@@ -129,34 +122,40 @@ struct UploadCVView: View {
         }
     }
 
-    private var linkField: some View {
-        HStack(spacing: Space.s) {
-            Image(systemName: "link").font(.system(size: 15)).foregroundStyle(Color.canopy400)
-            TextField("Paste a link", text: $link)
-                .textInputAutocapitalization(.never)
-                .autocorrectionDisabled()
-                .keyboardType(.URL)
-                .submitLabel(.done)
-                .focused($linkFocused)
-                .font(.system(size: 16))
-                .foregroundStyle(Color.canopy900)
-        }
-        .padding(.horizontal, Space.l)
-        .frame(height: 54)
-        .background(Color.canopyPaperDeep)
-        .clipShape(RoundedRectangle(cornerRadius: Radius.button, style: .continuous))
-        .overlay(
-            RoundedRectangle(cornerRadius: Radius.button, style: .continuous)
-                .strokeBorder(linkFocused ? Color.canopy600 : Color.canopyPaperLine, lineWidth: 1)
-        )
-    }
+    // MARK: LinkedIn
 
-    private var orDivider: some View {
-        HStack(spacing: Space.m) {
-            Rectangle().fill(Color.canopyPaperLine).frame(height: 1)
-            Text("or").atlasText(.caption).foregroundStyle(Color.canopy400)
-            Rectangle().fill(Color.canopyPaperLine).frame(height: 1)
+    private var linkedInCard: some View {
+        Button {
+            let now = !linkedInConnected
+            UIImpactFeedbackGenerator(style: .soft).impactOccurred(intensity: 0.7)
+            withAnimation(.spring(response: 0.35, dampingFraction: 0.8)) { linkedInConnected = now }
+            onSetLinkedIn(now)
+        } label: {
+            HStack(spacing: Space.m) {
+                BrandMarkView(mark: .linkedIn, size: 30)
+                VStack(alignment: .leading, spacing: 2) {
+                    Text(linkedInConnected ? "LinkedIn connected" : "Connect with LinkedIn")
+                        .atlasText(.bodyStrong).foregroundStyle(Color.canopy900)
+                    Text(linkedInConnected ? "Your experience and network are in" : "Import your experience and network")
+                        .atlasText(.caption).foregroundStyle(Color.canopy400)
+                }
+                Spacer(minLength: Space.s)
+                Image(systemName: linkedInConnected ? "checkmark.circle.fill" : "plus")
+                    .font(.system(size: linkedInConnected ? 20 : 16, weight: .medium))
+                    .foregroundStyle(linkedInConnected ? Color.canopy600 : Color.canopy400)
+            }
+            .padding(Space.l)
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .background(Color.canopyPaperDeep)
+            .clipShape(RoundedRectangle(cornerRadius: Radius.card, style: .continuous))
+            .overlay(
+                RoundedRectangle(cornerRadius: Radius.card, style: .continuous)
+                    .strokeBorder(linkedInConnected ? Color.canopy600 : Color.canopyPaperLine,
+                                  lineWidth: linkedInConnected ? 1.5 : 1)
+            )
         }
+        .buttonStyle(.plain)
+        .accessibilityLabel(linkedInConnected ? "LinkedIn connected. Tap to disconnect." : "Connect with LinkedIn")
     }
 
     // MARK: Import handling

@@ -46,7 +46,8 @@ struct WelcomeView: View {
                 ZStack {
                     CanopyPath(trunkProgress: trunkProgress,
                                crownProgress: crownProgress,
-                               nodesRevealed: nodesRevealed)
+                               nodesRevealed: nodesRevealed,
+                               active: 0)
                     if shaftActive, pathSize.height > 0 { LightShaft(area: pathSize) }
                     if leavesActive, pathSize.height > 0 { FallingLeaves(area: pathSize) }
                 }
@@ -62,7 +63,6 @@ struct WelcomeView: View {
                 headline.padding(.top, 4)
                 subhead.padding(.top, 12)
                 cta.padding(.top, 24)
-                secondary.padding(.top, 14)
                 footer.padding(.top, 16)
             }
             .padding(.horizontal, margin)
@@ -134,21 +134,12 @@ struct WelcomeView: View {
 
     private var cta: some View {
         Button(action: begin) {
-            Text("Begin with my CV")
+            Text("Get started")
                 .font(Typeface.body(17, weight: .medium))
         }
         .buttonStyle(CanopyCTAStyle())
         .scaleEffect(ctaBreath ? 1.008 : 1)
         .offset(y: ctaIn ? 0 : 12)
-        .opacity(ctaIn ? 1 : 0)
-    }
-
-    private var secondary: some View {
-        Button(action: begin) {
-            Text("I'm hiring →")
-                .font(Typeface.body(15))
-                .foregroundStyle(Color.canopy400)
-        }
         .opacity(ctaIn ? 1 : 0)
     }
 
