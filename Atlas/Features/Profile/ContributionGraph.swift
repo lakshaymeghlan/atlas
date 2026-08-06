@@ -51,5 +51,5 @@ struct ContributionGraph: View {
 #Preview {
     ContributionGraph()
         .padding()
-        .background(Color(hex: "FCFBF8"))
+        .background(Color.canopyPaper)
 }

@@ -11,14 +11,9 @@ struct MainTabView: View {
 
     var body: some View {
         ZStack {
-            // One warm sky behind every tab, so each tab's content respects the
-            // safe area (no per-tab ignoresSafeArea backgrounds fighting it).
-            ZStack(alignment: .top) {
-                Palette.paper
-                SkyBackdrop(height: 280, intensity: 0.75, maxClouds: 3)
-                    .ignoresSafeArea(edges: .top)
-            }
-            .ignoresSafeArea()
+            // One paper surface (with grain) behind every tab, so each tab's
+            // content respects the safe area without fighting per-tab backgrounds.
+            Color.canopyPaper.ignoresSafeArea().canopyGrain()
 
             switch tab {
             case .jobs: JobsView()
@@ -65,7 +60,7 @@ private struct BottomBar: View {
                         Text(tab.label)
                             .font(.system(size: 10.5, weight: .medium))
                     }
-                    .foregroundStyle(selection == tab ? Palette.ink : Palette.inkTertiary)
+                    .foregroundStyle(selection == tab ? Color.canopy900 : Color.canopy400)
                     .frame(maxWidth: .infinity)
                     .padding(.top, 10)
                     .contentShape(Rectangle())
@@ -80,7 +75,7 @@ private struct BottomBar: View {
             Rectangle()
                 .fill(.ultraThinMaterial)
                 .overlay(alignment: .top) {
-                    Rectangle().fill(Palette.border).frame(height: 1)
+                    Rectangle().fill(Color.canopyPaperLine).frame(height: 1)
                 }
                 .ignoresSafeArea(edges: .bottom)
         )
@@ -102,7 +97,7 @@ struct SavedView: View {
                         HStack {
                             Eyebrow("SAVED")
                             Spacer()
-                            Text("\(jobs.saved.count) saved").atlasText(.meta).foregroundStyle(Palette.inkTertiary)
+                            Text("\(jobs.saved.count) saved").atlasText(.meta).foregroundStyle(Color.canopy400)
                         }
                         ForEach(jobs.saved) { match in savedCard(match) }
                     }
@@ -120,28 +115,28 @@ struct SavedView: View {
             VStack(alignment: .leading, spacing: Space.m) {
                 HStack(alignment: .top, spacing: Space.m) {
                     RoundedRectangle(cornerRadius: Radius.chip, style: .continuous)
-                        .fill(Palette.blueTint)
+                        .fill(Color.canopyMist)
                         .frame(width: 40, height: 40)
                         .overlay(Text(String(match.company.prefix(1)))
-                            .font(.system(size: 17, weight: .semibold)).foregroundStyle(Palette.blue))
+                            .font(.system(size: 17, weight: .semibold)).foregroundStyle(Color.canopy600))
                     VStack(alignment: .leading, spacing: 2) {
-                        Text(match.role).atlasText(.bodyStrong).foregroundStyle(Palette.ink)
+                        Text(match.role).atlasText(.bodyStrong).foregroundStyle(Color.canopy900)
                         Text("\(match.company) · \(match.location)")
-                            .atlasText(.caption).foregroundStyle(Palette.inkSecondary)
+                            .atlasText(.caption).foregroundStyle(Color.canopy600)
                     }
                     Spacer(minLength: Space.s)
                     Button {
                         withAnimation(.spring(response: 0.35, dampingFraction: 0.8)) { jobs.toggleSave(match) }
                     } label: {
                         Image(systemName: "bookmark.fill")
-                            .font(.system(size: 15)).foregroundStyle(Palette.blue)
+                            .font(.system(size: 15)).foregroundStyle(Color.canopy600)
                             .frame(width: 40, height: 40)
                     }
                     .accessibilityLabel("Remove from saved")
                 }
                 if let salary = match.salary {
                     Text("\(match.match)% match · \(salary)")
-                        .atlasText(.caption).foregroundStyle(Palette.inkTertiary)
+                        .atlasText(.caption).foregroundStyle(Color.canopy400)
                 }
             }
         }
@@ -151,12 +146,12 @@ struct SavedView: View {
         VStack(spacing: Space.m) {
             Image(systemName: "bookmark")
                 .font(.system(size: 34, weight: .light))
-                .foregroundStyle(Palette.inkTertiary)
+                .foregroundStyle(Color.canopy400)
             Text("Nothing saved yet")
-                .atlasText(.title).foregroundStyle(Palette.ink)
+                .atlasText(.title).foregroundStyle(Color.canopy900)
             Text("Tap the bookmark on a role in Jobs to keep it here for later.")
                 .atlasText(.body)
-                .foregroundStyle(Palette.inkSecondary)
+                .foregroundStyle(Color.canopy600)
                 .multilineTextAlignment(.center)
                 .frame(maxWidth: 300)
         }

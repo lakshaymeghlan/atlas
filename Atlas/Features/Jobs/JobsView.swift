@@ -37,7 +37,7 @@ struct JobsView: View {
             Eyebrow("JOBS")
             Spacer()
             if !jobs.matches.isEmpty {
-                Text("\(jobs.matches.count) to review").atlasText(.meta).foregroundStyle(Palette.inkTertiary)
+                Text("\(jobs.matches.count) to review").atlasText(.meta).foregroundStyle(Color.canopy400)
             }
         }
         .padding(.horizontal, Space.screen)
@@ -73,10 +73,10 @@ struct JobsView: View {
 
     private var stamps: some View {
         ZStack {
-            stamp("PASS", color: Palette.error, angle: -14)
+            stamp("PASS", color: Color.sunDeep, angle: -14)
                 .opacity(Double(max(0, -drag.width) / 90))
                 .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topTrailing)
-            stamp("ACCEPT", color: Palette.success, angle: 14)
+            stamp("ACCEPT", color: Color.canopy600, angle: 14)
                 .opacity(Double(max(0, drag.width) / 90))
                 .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
         }
@@ -135,15 +135,15 @@ struct JobsView: View {
             Button(action: action) {
                 Image(systemName: icon)
                     .font(.system(size: 23, weight: .semibold))
-                    .foregroundStyle(filled ? .white : Palette.ink)
+                    .foregroundStyle(filled ? .white : Color.canopy900)
                     .frame(width: 66, height: 66)
-                    .background(Circle().fill(filled ? Palette.ink : .white))
-                    .overlay(Circle().strokeBorder(Palette.border, lineWidth: filled ? 0 : 1))
-                    .shadow(color: filled ? Palette.ink.opacity(0.22) : .black.opacity(0.06),
+                    .background(Circle().fill(filled ? Color.canopy900 : .white))
+                    .overlay(Circle().strokeBorder(Color.canopyPaperLine, lineWidth: filled ? 0 : 1))
+                    .shadow(color: filled ? Color.canopy900.opacity(0.22) : .black.opacity(0.06),
                             radius: 14, x: 0, y: 7)
             }
             .buttonStyle(.plain)
-            Text(label).atlasText(.meta).foregroundStyle(Palette.inkTertiary)
+            Text(label).atlasText(.meta).foregroundStyle(Color.canopy400)
         }
         .accessibilityLabel(label)
     }
@@ -154,11 +154,11 @@ struct JobsView: View {
         VStack(spacing: Space.m) {
             Image(systemName: "sparkles")
                 .font(.system(size: 34, weight: .light))
-                .foregroundStyle(Palette.blue)
+                .foregroundStyle(Color.canopy600)
             Text("That's everyone for now.")
-                .atlasText(.title).foregroundStyle(Palette.ink)
+                .atlasText(.title).foregroundStyle(Color.canopy900)
             Text("Canopy keeps learning your profile. The moment new roles that fit open up, they'll appear here — and we'll let you know.")
-                .atlasText(.body).foregroundStyle(Palette.inkSecondary)
+                .atlasText(.body).foregroundStyle(Color.canopy600)
                 .multilineTextAlignment(.center)
                 .frame(maxWidth: 300)
         }

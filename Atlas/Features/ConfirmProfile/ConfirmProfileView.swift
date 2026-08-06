@@ -24,11 +24,11 @@ struct ConfirmProfileView: View {
                 Eyebrow("CONFIRM PROFILE · 3 OF 3")
                 Text("Here's what\nwe found.")
                     .atlasText(.display)
-                    .foregroundStyle(Palette.ink)
+                    .foregroundStyle(Color.canopy900)
                     .fixedSize(horizontal: false, vertical: true)
                 Text("Tap any card to edit.")
                     .atlasText(.body)
-                    .foregroundStyle(Palette.inkSecondary)
+                    .foregroundStyle(Color.canopy600)
             }
 
             experienceCard
@@ -63,7 +63,7 @@ struct ConfirmProfileView: View {
                 labeled(e.role, low: e.isLowConfidence, style: .bodyStrong)
                 let subtitle = [e.company, dateRange(e.startDate, e.endDate, current: true)]
                     .filter { !$0.isEmpty }.joined(separator: " · ")
-                Text(subtitle).atlasText(.caption).foregroundStyle(Palette.inkTertiary)
+                Text(subtitle).atlasText(.caption).foregroundStyle(Color.canopy400)
             }
             Spacer(minLength: 0)
         }
@@ -86,7 +86,7 @@ struct ConfirmProfileView: View {
             let subtitle = [degree, years].filter { !$0.isEmpty }.joined(separator: " · ")
             Text(subtitle.isEmpty ? "Add details" : subtitle)
                 .atlasText(.caption)
-                .foregroundStyle(Palette.inkTertiary)
+                .foregroundStyle(Color.canopy400)
         }
     }
 
@@ -127,10 +127,10 @@ struct ConfirmProfileView: View {
                         Spacer()
                         Image(systemName: "pencil")
                             .font(.system(size: 14, weight: .semibold))
-                            .foregroundStyle(Palette.inkTertiary)
+                            .foregroundStyle(Color.canopy400)
                     }
                     if isEmpty {
-                        Text(addLabel).atlasText(.body).foregroundStyle(Palette.inkTertiary)
+                        Text(addLabel).atlasText(.body).foregroundStyle(Color.canopy400)
                     } else {
                         content()
                     }
@@ -144,18 +144,18 @@ struct ConfirmProfileView: View {
 
     private func labeled(_ text: String, low: Bool, style: TextRole) -> some View {
         HStack(spacing: Space.xs) {
-            if low { Circle().fill(Palette.blue).frame(width: 6, height: 6) }
-            Text(text).atlasText(style).foregroundStyle(Palette.ink)
+            if low { Circle().fill(Color.canopy600).frame(width: 6, height: 6) }
+            Text(text).atlasText(style).foregroundStyle(Color.canopy900)
         }
     }
 
     private func monogram(_ company: String) -> some View {
         let letter = company.first.map { String($0).uppercased() } ?? "—"
         return RoundedRectangle(cornerRadius: Radius.chip, style: .continuous)
-            .fill(Palette.chip)
+            .fill(Color.canopyMist)
             .frame(width: 40, height: 40)
             .overlay(Text(letter).font(.system(size: 16, weight: .semibold))
-                .foregroundStyle(Palette.inkSecondary))
+                .foregroundStyle(Color.canopy600))
             .accessibilityHidden(true)
     }
 

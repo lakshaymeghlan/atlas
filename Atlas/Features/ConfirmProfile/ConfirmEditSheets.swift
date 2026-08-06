@@ -136,5 +136,5 @@ private func addButton(_ title: String, action: @escaping () -> Void) -> some Vi
     Button(action: action) {
         Label(title, systemImage: "plus")
     }
-    .foregroundStyle(Palette.blue)
+    .foregroundStyle(Color.canopy600)
 }

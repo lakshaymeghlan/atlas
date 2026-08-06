@@ -39,10 +39,10 @@ struct JobCardView: View {
             VStack(alignment: .leading, spacing: Space.s) {
                 Text(match.role)
                     .font(.system(size: 32, weight: .bold))
-                    .foregroundStyle(Palette.ink)
+                    .foregroundStyle(Color.canopy900)
                     .fixedSize(horizontal: false, vertical: true)
                 Text("\(match.company) · \(match.location)")
-                    .atlasText(.body).foregroundStyle(Palette.inkSecondary)
+                    .atlasText(.body).foregroundStyle(Color.canopy600)
             }
 
             FlowLayout(spacing: Space.s) {
@@ -54,7 +54,7 @@ struct JobCardView: View {
                     Image(systemName: "banknote").font(.system(size: 13))
                     Text(salary).atlasText(.body)
                 }
-                .foregroundStyle(Palette.inkSecondary)
+                .foregroundStyle(Color.canopy600)
             }
 
             Spacer(minLength: Space.m)
@@ -63,7 +63,7 @@ struct JobCardView: View {
                 Text("Tap to see \(match.company)").atlasText(.meta)
                 Image(systemName: "arrow.right").font(.system(size: 9, weight: .semibold))
             }
-            .foregroundStyle(Palette.inkTertiary)
+            .foregroundStyle(Color.canopy400)
         }
         .cardFace(onTap: flip)
     }
@@ -75,18 +75,18 @@ struct JobCardView: View {
             HStack(alignment: .top, spacing: Space.m) {
                 companyWell(56)
                 VStack(alignment: .leading, spacing: 3) {
-                    Text(match.company).atlasText(.title).foregroundStyle(Palette.ink)
+                    Text(match.company).atlasText(.title).foregroundStyle(Color.canopy900)
                     Text("\(match.industry) · \(match.size) · \(match.stage)")
-                        .atlasText(.caption).foregroundStyle(Palette.inkSecondary)
+                        .atlasText(.caption).foregroundStyle(Color.canopy600)
                 }
                 Spacer(minLength: Space.s)
                 Image(systemName: "arrow.uturn.backward")
                     .font(.system(size: 15, weight: .semibold))
-                    .foregroundStyle(Palette.inkTertiary)
+                    .foregroundStyle(Color.canopy400)
             }
 
             Text(match.about)
-                .atlasText(.body).foregroundStyle(Palette.inkSecondary)
+                .atlasText(.body).foregroundStyle(Color.canopy600)
                 .fixedSize(horizontal: false, vertical: true)
 
             VStack(alignment: .leading, spacing: Space.s) {
@@ -94,9 +94,9 @@ struct JobCardView: View {
                 ForEach(match.reasons, id: \.self) { reason in
                     HStack(alignment: .top, spacing: Space.s) {
                         Image(systemName: "checkmark.circle.fill")
-                            .font(.system(size: 14)).foregroundStyle(Palette.blue)
+                            .font(.system(size: 14)).foregroundStyle(Color.canopy600)
                             .padding(.top, 1)
-                        Text(reason).atlasText(.body).foregroundStyle(Palette.ink)
+                        Text(reason).atlasText(.body).foregroundStyle(Color.canopy900)
                     }
                 }
             }
@@ -107,7 +107,7 @@ struct JobCardView: View {
                 Image(systemName: "arrow.uturn.backward").font(.system(size: 9, weight: .semibold))
                 Text("Tap to flip back").atlasText(.meta)
             }
-            .foregroundStyle(Palette.inkTertiary)
+            .foregroundStyle(Color.canopy400)
         }
         .cardFace(onTap: flip)
     }
@@ -116,31 +116,31 @@ struct JobCardView: View {
 
     private func companyWell(_ size: CGFloat) -> some View {
         RoundedRectangle(cornerRadius: Radius.card, style: .continuous)
-            .fill(Palette.blueTint)
+            .fill(Color.canopyMist)
             .frame(width: size, height: size)
             .overlay(
                 Text(String(match.company.prefix(1)))
                     .font(.system(size: size * 0.42, weight: .semibold))
-                    .foregroundStyle(Palette.blue)
+                    .foregroundStyle(Color.canopy600)
             )
     }
 
     private var matchBadge: some View {
         Text("\(match.match)% match")
             .font(.system(size: 12, weight: .semibold))
-            .foregroundStyle(Palette.blue)
+            .foregroundStyle(Color.canopy600)
             .padding(.vertical, 6)
             .padding(.horizontal, 11)
-            .background(Capsule().fill(Palette.blueTint))
+            .background(Capsule().fill(Color.canopyMist))
     }
 
     private var saveButton: some View {
         Button(action: onToggleSave) {
             Image(systemName: isSaved ? "bookmark.fill" : "bookmark")
                 .font(.system(size: 16, weight: .medium))
-                .foregroundStyle(isSaved ? Palette.blue : Palette.inkSecondary)
+                .foregroundStyle(isSaved ? Color.canopy600 : Color.canopy600)
                 .frame(width: 40, height: 40)
-                .background(Circle().fill(isSaved ? Palette.blueTint : Palette.chip))
+                .background(Circle().fill(isSaved ? Color.canopyMist : Color.canopyMist))
         }
         .accessibilityLabel(isSaved ? "Saved" : "Save job")
     }
@@ -173,9 +173,9 @@ private extension View {
         return padding(Space.screen)
             .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
             .background(shape.fill(.white))
-            .overlay(shape.strokeBorder(Palette.border.opacity(0.7), lineWidth: 1))
+            .overlay(shape.strokeBorder(Color.canopyPaperLine.opacity(0.7), lineWidth: 1))
             .clipShape(shape)
-            .shadow(color: Palette.ink.opacity(0.07), radius: 18, x: 0, y: 10)
+            .shadow(color: Color.canopy900.opacity(0.07), radius: 18, x: 0, y: 10)
             .contentShape(shape)
             .onTapGesture(perform: onTap)
     }

@@ -20,7 +20,7 @@ struct AnalysingView: View {
 
     var body: some View {
         ZStack {
-            Palette.paper.ignoresSafeArea()
+            Color.canopyPaper.ignoresSafeArea()
             if failed {
                 failureState
             } else {
@@ -37,7 +37,7 @@ struct AnalysingView: View {
                 .ignoresSafeArea()
             Text("Getting to know\nyour experience.")
                 .atlasText(.display)
-                .foregroundStyle(Palette.ink)
+                .foregroundStyle(Color.canopy900)
                 .multilineTextAlignment(.center)
                 .fixedSize(horizontal: false, vertical: true)
                 .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
@@ -51,11 +51,11 @@ struct AnalysingView: View {
             Spacer()
             Text("That one didn't parse.")
                 .atlasText(.display)
-                .foregroundStyle(Palette.ink)
+                .foregroundStyle(Color.canopy900)
                 .fixedSize(horizontal: false, vertical: true)
             Text("Some PDFs are images rather than text. Try a different export, or add your details by hand.")
                 .atlasText(.body)
-                .foregroundStyle(Palette.inkSecondary)
+                .foregroundStyle(Color.canopy600)
             Spacer()
             VStack(spacing: Space.m) {
                 AtlasButton("Try another file", action: onRetry)
