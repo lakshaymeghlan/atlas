@@ -29,30 +29,59 @@ final class AppRouter {
     nonisolated static func initialState(isSignedIn: Bool, profile: UserProfile) -> JourneyState {
         guard isSignedIn else { return .welcome }
         if profile.isOnboarded { return .home }
-        if profile.hasParsedContent {
-            return profile.desiredRoles.isEmpty ? .rolePreferences : .confirmProfile
-        }
+        if profile.hasParsedContent { return .preferences }
         return .uploadCV
     }
 
     // MARK: Transitions
 
     func didBegin() {
-        // "Begin with my CV" — start a session, straight to the CV step.
-        // LinkedIn/GitHub are optional connectors added later on the profile.
+        // From the tree onboarding → the "what brings you here?" chooser. No
+        // session yet; it starts once they pick a path.
+        go(.chooseIntent)
+    }
+
+    /// Chooser → candidate path. Start the session and go to the CV step.
+    func chooseExplore() {
         auth.begin()
         go(.uploadCV)
     }
 
+    /// Chooser → joining through a company. Same profile build for now (the
+    /// company-code/invite flow isn't built yet).
+    /// ponytail: placeholder — routes into the CV flow until the company path exists.
+    func chooseCompany() {
+        auth.begin()
+        go(.uploadCV)
+    }
+
+    /// Back out of the CV step to the chooser — undoes the session so re-picking
+    /// a path is clean.
+    func backToIntent() {
+        auth.signOut()
+        profile.reset()
+        go(.chooseIntent)
+    }
+
     func didPickSource(_ source: CVSource) {
-        if case .link(let url) = source { profile.setPortfolioURL(url) }
         go(.analysing(source: source))
     }
 
-    func parsingSucceeded() { go(.rolePreferences) }
+    /// LinkedIn connect toggle on the CV step — attaches/detaches the connector
+    /// on the profile so it's there whether or not they also upload a file.
+    func setLinkedIn(_ on: Bool) {
+        on ? profile.connectLinkedIn() : profile.disconnectLinkedIn()
+    }
+
+    // Onboarding: analysing → preferences wizard → profile review. (The old
+    // roles step is parked — RolePreferences/didChooseRoles kept for later.)
+    func parsingSucceeded() { go(.preferences) }
 
     /// From the Analysing failure state: build the profile by hand.
-    func enterManualEntry() { go(.rolePreferences) }
+    func enterManualEntry() { go(.preferences) }
+
+    /// Preferences wizard finished → the profile review.
+    func preferencesCompleted() { go(.confirmProfile) }
 
     func didChooseRoles(_ roles: [String]) {
         profile.setDesiredRoles(roles)
