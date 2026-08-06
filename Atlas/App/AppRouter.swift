@@ -37,9 +37,10 @@ final class AppRouter {
 
     // MARK: Transitions
 
-    func didSignIn() {
-        // They signed in with LinkedIn, so LinkedIn is connected from the start.
-        profile.connectLinkedIn()
+    func didBegin() {
+        // "Begin with my CV" — start a session, straight to the CV step.
+        // LinkedIn/GitHub are optional connectors added later on the profile.
+        auth.begin()
         go(.uploadCV)
     }
 

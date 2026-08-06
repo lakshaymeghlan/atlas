@@ -21,7 +21,7 @@ struct RootView: View {
         case .launching:
             Color.clear
         case .welcome:
-            WelcomeView(onSignedIn: router.didSignIn)
+            WelcomeView(onBegin: router.didBegin)
         case .uploadCV:
             UploadCVView(onContinue: router.didPickSource)
         case .analysing(let source):

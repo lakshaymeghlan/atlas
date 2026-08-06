@@ -18,26 +18,26 @@ extension Color {
     }
 }
 
-/// The full Atlas palette. These are the only colours in the app.
+/// The full Canopy palette — cool, calm ocean. These are the only colours in the app.
 enum Palette {
     // Surface
-    static let paper = Color(hex: "FCFBF8")
+    static let paper = Color(hex: "F3FAFB")
     static let card = Color(hex: "FFFFFF")
-    static let border = Color(hex: "E7E5E0")
-    static let chip = Color(hex: "F0EEE9")
+    static let border = Color(hex: "DCE8EA")
+    static let chip = Color(hex: "E8F3F5")
 
-    // Ink
-    static let ink = Color(hex: "0C0C0D")
-    static let inkSecondary = Color(hex: "6E6E73")
-    static let inkTertiary = Color(hex: "9A9A9F")
+    // Ink — deep sea, not pure black
+    static let ink = Color(hex: "0C2A31")
+    static let inkSecondary = Color(hex: "4E6B72")
+    static let inkTertiary = Color(hex: "8AA4AB")
 
-    // Action — the only saturated colour in the app
-    static let blue = Color(hex: "2F4FE8")
-    static let bluePressed = Color(hex: "2440C4")
-    static let blueTint = Color(hex: "E9EDFD")
+    // Action — ocean cerulean, the app's one saturated colour
+    static let blue = Color(hex: "0E86A8")
+    static let bluePressed = Color(hex: "0A6C8A")
+    static let blueTint = Color(hex: "DFF2F6")
 
     // Status — used almost never
-    static let success = Color(hex: "2E7D5B")
+    static let success = Color(hex: "1F9E86")
     static let error = Color(hex: "C0392B")
 }
 

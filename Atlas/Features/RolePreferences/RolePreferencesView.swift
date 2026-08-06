@@ -25,7 +25,7 @@ struct RolePreferencesView: View {
                     .atlasText(.display)
                     .foregroundStyle(Palette.ink)
                     .fixedSize(horizontal: false, vertical: true)
-                Text("Pick a few roles, or type your own. Atlas matches you to these — you can change them anytime.")
+                Text("Pick a few roles, or type your own. Canopy matches you to these — you can change them anytime.")
                     .atlasText(.body)
                     .foregroundStyle(Palette.inkSecondary)
             }

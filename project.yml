@@ -39,7 +39,7 @@ targets:
     info:
       path: Atlas/Info.plist
       properties:
-        CFBundleDisplayName: Atlas
+        CFBundleDisplayName: Canopy
         UILaunchScreen:
           UIColorName: LaunchBackground
         UISupportedInterfaceOrientations:

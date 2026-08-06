@@ -18,8 +18,8 @@ struct SkyBackdrop: View {
         (0.22, 32, 70, 0.72, 0.9),
         (0.56, 28, 160, 0.28, 0.82),
     ]
-    private let sun = Color(hex: "FFCFA0")
-    private let sunCore = Color(hex: "FFECD2")
+    private let sun = Color(hex: "AEE4F0")
+    private let sunCore = Color(hex: "E6F7FB")
 
     var body: some View {
         Group {
@@ -59,8 +59,8 @@ struct SkyBackdrop: View {
         ctx.fill(
             rect,
             with: .linearGradient(
-                Gradient(colors: [Color(hex: "FFDCB4").opacity(0.6 * k),
-                                  Color(hex: "FFE8CE").opacity(0.24 * k), .clear]),
+                Gradient(colors: [Color(hex: "C6EAF3").opacity(0.7 * k),
+                                  Color(hex: "DFF3F8").opacity(0.28 * k), .clear]),
                 startPoint: CGPoint(x: size.width / 2, y: 0),
                 endPoint: CGPoint(x: size.width / 2, y: size.height * 0.82)
             )

@@ -184,8 +184,10 @@ struct UserProfile: Codable, Equatable {
 // MARK: - Auth
 
 enum AuthProvider: String, Codable {
-    case linkedIn, github
-    var displayName: String { self == .linkedIn ? "LinkedIn" : "GitHub" }
+    case linkedIn, github, direct
+    var displayName: String {
+        switch self { case .linkedIn: "LinkedIn"; case .github: "GitHub"; case .direct: "Canopy" }
+    }
 }
 
 struct AuthUser: Codable, Equatable {

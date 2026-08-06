@@ -32,6 +32,15 @@ final class AuthStore {
         log.info("Stub sign-in via \(provider.rawValue, privacy: .public)")
     }
 
+    /// Start a session without OAuth — the "Begin with my CV" path. Connectors
+    /// (LinkedIn/GitHub) become optional enrichers on the profile later.
+    func begin() {
+        let started = AuthUser(fullName: nil, email: nil, provider: .direct)
+        user = started
+        LocalStore.save(started, for: .authUser)
+        log.info("Session started (direct)")
+    }
+
     func signOut() {
         user = nil
         LocalStore.remove(.authUser)

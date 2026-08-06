@@ -38,7 +38,7 @@ struct HowItWorks: View {
             }
         }
         .accessibilityElement(children: .ignore)
-        .accessibilityLabel("How it works: upload your CV, Atlas builds your profile, then matches you to roles.")
+        .accessibilityLabel("How it works: upload your CV, Canopy builds your profile, then matches you to roles.")
     }
 
     private func stepView(_ step: Step, isActive: Bool) -> some View {

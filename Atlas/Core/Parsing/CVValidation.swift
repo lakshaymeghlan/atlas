@@ -11,7 +11,7 @@ enum CVValidation {
         var message: String {
             switch self {
             case .tooLarge: return "That file is over 10 MB. Try exporting a smaller PDF."
-            case .wrongType: return "Atlas reads PDF and DOCX. Try exporting your CV again."
+            case .wrongType: return "Canopy reads PDF and DOCX. Try exporting your CV again."
             case .empty: return "That file looks empty. Try exporting your CV again."
             }
         }

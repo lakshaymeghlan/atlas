@@ -9,7 +9,7 @@ enum MockIntegrations {
         contributionsLastYear: 1284,
         followers: 210,
         projects: [
-            GitHubProject(name: "atlas-ios", description: "The Atlas iOS app — SwiftUI, MV, Observable.",
+            GitHubProject(name: "canopy-ios", description: "The Canopy iOS app — SwiftUI, MV, Observable.",
                           language: "Swift", stars: 128, forks: 12, pinned: true),
             GitHubProject(name: "river-kit", description: "Fluid Canvas + Metal animations for SwiftUI.",
                           language: "Swift", stars: 342, forks: 28, pinned: true),

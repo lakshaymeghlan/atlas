@@ -157,7 +157,7 @@ struct JobsView: View {
                 .foregroundStyle(Palette.blue)
             Text("That's everyone for now.")
                 .atlasText(.title).foregroundStyle(Palette.ink)
-            Text("Atlas keeps learning your profile. The moment new roles that fit open up, they'll appear here — and we'll let you know.")
+            Text("Canopy keeps learning your profile. The moment new roles that fit open up, they'll appear here — and we'll let you know.")
                 .atlasText(.body).foregroundStyle(Palette.inkSecondary)
                 .multilineTextAlignment(.center)
                 .frame(maxWidth: 300)

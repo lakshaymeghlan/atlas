@@ -3,7 +3,7 @@ import UniformTypeIdentifiers
 import os
 
 /// S03 · Add your CV or a link. Upload a PDF/DOCX, or paste a portfolio / profile
-/// URL — Atlas reads either and builds the profile. Works for any field.
+/// URL — Canopy reads either and builds the profile. Works for any field.
 struct UploadCVView: View {
     var onContinue: (CVSource) -> Void
 
@@ -32,7 +32,7 @@ struct UploadCVView: View {
                     .atlasText(.display)
                     .foregroundStyle(Palette.ink)
                     .fixedSize(horizontal: false, vertical: true)
-                Text("Atlas reads it and builds your profile — no forms. Upload a file, or paste a link to your CV or portfolio.")
+                Text("Canopy reads it and builds your profile — no forms. Upload a file, or paste a link to your CV or portfolio.")
                     .atlasText(.body)
                     .foregroundStyle(Palette.inkSecondary)
             }
@@ -54,7 +54,7 @@ struct UploadCVView: View {
 
             VStack(alignment: .leading, spacing: Space.s) {
                 linkField
-                Text("A CV or portfolio link — personal site, Behance, Dribbble, Google Scholar. Atlas reads it.")
+                Text("A CV or portfolio link — personal site, Behance, Dribbble, Google Scholar. Canopy reads it.")
                     .atlasText(.caption)
                     .foregroundStyle(Palette.inkTertiary)
             }
