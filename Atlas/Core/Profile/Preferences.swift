@@ -4,6 +4,9 @@ import Foundation
 /// wizard, used to shape matches. Stored on the profile so it persists and
 /// carries to the real backend unchanged.
 struct JobPreferences: Codable, Equatable {
+    /// The things you'd protect time for — up to five. Shapes culture/fit, not
+    /// just the role.
+    var hobbies: Set<String> = []
     var arrangements: Set<WorkArrangement> = []
     var workTypes: Set<WorkType> = []
     var openToAnywhere: Bool = false
@@ -62,11 +65,31 @@ enum WorkPriority: String, Codable, CaseIterable, Identifiable {
     }
 }
 
-/// Common visa-sponsorship destinations offered on the relocation step.
+/// Hobbies offered on the "what makes life feel like yours" step (pick up to 5).
+enum Hobbies {
+    static let maxSelectable = 5
+    static let options = [
+        "Coding", "Reading", "Gaming", "Music", "Cooking", "Fitness",
+        "Travel", "Photography", "Art & design", "Team sports", "Writing",
+        "Gardening", "Film & TV", "Volunteering", "Hiking", "Dancing",
+        "Podcasts", "Board games",
+    ]
+}
+
+/// Common visa-sponsorship destinations offered as quick-pick chips, plus the
+/// full searchable country list (sourced from the system, not hardcoded).
 enum Relocation {
     static let destinations = [
         "United States", "United Kingdom", "Germany", "Netherlands", "Canada",
         "Ireland", "Australia", "Singapore", "Switzerland", "France",
         "Spain", "Sweden", "UAE", "Japan",
     ]
+
+    /// Every ISO country, localized — for the debounced search.
+    static let allCountries: [String] = {
+        Locale.Region.isoRegions
+            .filter { $0.identifier.count == 2 }
+            .compactMap { Locale.current.localizedString(forRegionCode: $0.identifier) }
+            .sorted()
+    }()
 }

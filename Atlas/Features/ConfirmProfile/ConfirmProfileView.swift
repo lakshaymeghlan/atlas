@@ -19,9 +19,9 @@ struct ConfirmProfileView: View {
     var body: some View {
         @Bindable var store = store
 
-        return OnboardingScaffold(stageIndex: 7) {
+        return OnboardingScaffold(stageIndex: 8) {
             VStack(alignment: .leading, spacing: Space.l) {
-                Eyebrow("YOUR PROFILE · 8 OF 8")
+                Eyebrow("YOUR PROFILE · 9 OF 9")
                 Text("We've built\nyour profile.")
                     .atlasText(.display)
                     .foregroundStyle(Color.canopy900)
@@ -35,6 +35,7 @@ struct ConfirmProfileView: View {
             educationCard
             skillsCard
             languagesCard
+            preferencesCard
         } bottom: {
             AtlasButton("Looks good", action: onDone)
         }
@@ -46,6 +47,16 @@ struct ConfirmProfileView: View {
     }
 
     // MARK: Cards
+
+    /// Read-out of the preferences picked in the wizard.
+    private var preferencesCard: some View {
+        AtlasCard(padding: Space.l) {
+            VStack(alignment: .leading, spacing: Space.l) {
+                Eyebrow("WHAT YOU'RE LOOKING FOR")
+                PreferencesSummary(prefs: store.profile.preferences)
+            }
+        }
+    }
 
     private var experienceCard: some View {
         let items = sortedByConfidence(store.profile.experiences, low: \.isLowConfidence)

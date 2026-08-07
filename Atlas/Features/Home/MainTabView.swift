@@ -6,7 +6,7 @@ import UIKit
 struct MainTabView: View {
     var onSignOut: () -> Void
 
-    @State private var tab: MainTab = .jobs
+    @State private var tab: MainTab = .home
     @State private var jobs = JobsStore()
 
     var body: some View {
@@ -16,7 +16,8 @@ struct MainTabView: View {
             Color.canopyPaper.ignoresSafeArea().canopyGrain()
 
             switch tab {
-            case .jobs: JobsView()
+            case .home: HomeView(goTo: { tab = $0 })
+            case .explore: JobsView()
             case .journey: JourneyView()
             case .profile: ProfileView(onSignOut: onSignOut)
             }
@@ -29,17 +30,23 @@ struct MainTabView: View {
 }
 
 enum MainTab: CaseIterable, Identifiable {
-    case jobs, journey, profile
+    case home, explore, journey, profile
     var id: Self { self }
 
     var label: String {
-        switch self { case .jobs: "Jobs"; case .journey: "Journey"; case .profile: "Profile" }
+        switch self {
+        case .home: "Home"; case .explore: "Explore"; case .journey: "Journey"; case .profile: "Profile"
+        }
     }
     var icon: String {
-        switch self { case .jobs: "briefcase"; case .journey: "signpost.right"; case .profile: "person" }
+        switch self {
+        case .home: "house"; case .explore: "square.stack"; case .journey: "signpost.right"; case .profile: "person"
+        }
     }
     var iconFilled: String {
-        switch self { case .jobs: "briefcase.fill"; case .journey: "signpost.right.fill"; case .profile: "person.fill" }
+        switch self {
+        case .home: "house.fill"; case .explore: "square.stack.fill"; case .journey: "signpost.right.fill"; case .profile: "person.fill"
+        }
     }
 }
 

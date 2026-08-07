@@ -3,9 +3,9 @@ import Foundation
 /// The onboarding journey. The stage titles feed the progress indicator on every
 /// onboarding screen and are shared so the labels never drift.
 enum Journey {
-    /// Total onboarding steps, for the progress bar: upload (0) · six preference
-    /// steps (1–6) · profile review (7).
-    static let onboardingSteps = 8
+    /// Total onboarding steps, for the progress bar: upload (0) · seven preference
+    /// steps (1–7) · profile review (8).
+    static let onboardingSteps = 9
 }
 
 /// A CV the user picked from Files. In the prototype the bytes ride along in
