@@ -40,8 +40,7 @@ struct WelcomeView: View {
             Color.canopyPaper.ignoresSafeArea()
 
             VStack(spacing: 0) {
-                topBar
-                wordmark.padding(.top, 2).padding(.bottom, 12).zIndex(1)
+                wordmark.padding(.top, Space.l).padding(.bottom, 12).zIndex(1)
 
                 ZStack {
                     CanopyPath(trunkProgress: trunkProgress,
@@ -80,19 +79,6 @@ struct WelcomeView: View {
     }
 
     // MARK: Pieces
-
-    private var topBar: some View {
-        HStack {
-            Spacer()
-            Button(action: begin) {
-                Text("Skip")
-                    .font(Typeface.body(13))
-                    .foregroundStyle(Color.canopy400)
-            }
-            .accessibilityLabel("Skip the intro")
-        }
-        .padding(.top, Space.s)
-    }
 
     private var wordmark: some View {
         Text("canopy")

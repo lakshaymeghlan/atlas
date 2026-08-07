@@ -34,6 +34,7 @@ struct ProfileView: View {
                     }
                     if !p.skills.isEmpty { skillsSection }
                     if !p.languages.isEmpty { languagesSection }
+                    preferencesSection
                     if let url = p.portfolioURL { portfolioCard(url) }
 
                     // Connect prompts appear only while a source is missing.
@@ -75,31 +76,36 @@ struct ProfileView: View {
         .frame(height: 44)
     }
 
+    // Dark hero card — the top of the profile, echoing the dark job card.
     private var header: some View {
         HStack(spacing: Space.l) {
             Circle()
-                .fill(Color.canopyMist)
+                .fill(Color.canopyPaper.opacity(0.14))
                 .frame(width: 62, height: 62)
                 .overlay(
                     Text(initials(p.fullName))
                         .font(.system(size: 22, weight: .semibold))
-                        .foregroundStyle(Color.canopy600)
+                        .foregroundStyle(Color.canopyPaper)
                 )
             VStack(alignment: .leading, spacing: 3) {
                 Text(p.fullName ?? "You")
                     .font(.system(size: 25, weight: .bold))
-                    .foregroundStyle(Color.canopy900)
+                    .foregroundStyle(Color.canopyPaper)
                 if let headline = p.headline {
-                    Text(headline).atlasText(.body).foregroundStyle(Color.canopy600)
+                    Text(headline).atlasText(.body).foregroundStyle(Color.canopy200)
                         .fixedSize(horizontal: false, vertical: true)
                 }
                 HStack(spacing: Space.m) {
-                    if let loc = p.location { metaLabel("mappin.and.ellipse", loc) }
-                    if let gh = p.github { metaLabel("chevron.left.forwardslash.chevron.right", "@\(gh.username)") }
+                    if let loc = p.location { metaLabel("mappin.and.ellipse", loc, color: Color.canopy200) }
+                    if let gh = p.github { metaLabel("chevron.left.forwardslash.chevron.right", "@\(gh.username)", color: Color.canopy200) }
                 }
                 .padding(.top, 1)
             }
+            Spacer(minLength: 0)
         }
+        .padding(Space.l)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(RoundedRectangle(cornerRadius: Radius.card, style: .continuous).fill(Color.canopy900))
     }
 
     // MARK: LinkedIn
@@ -282,6 +288,12 @@ struct ProfileView: View {
         }
     }
 
+    private var preferencesSection: some View {
+        sectionCard("WHAT YOU'RE LOOKING FOR") {
+            PreferencesSummary(prefs: p.preferences)
+        }
+    }
+
     private var rolesSection: some View {
         sectionCard("LOOKING FOR") {
             FlowLayout {
@@ -376,12 +388,12 @@ struct ProfileView: View {
         Rectangle().fill(Color.canopyPaperLine).frame(height: 1).padding(.vertical, Space.xs)
     }
 
-    private func metaLabel(_ symbol: String, _ text: String) -> some View {
+    private func metaLabel(_ symbol: String, _ text: String, color: Color = Color.canopy400) -> some View {
         HStack(spacing: 4) {
             Image(systemName: symbol).font(.system(size: 11, weight: .regular))
             Text(text).atlasText(.caption)
         }
-        .foregroundStyle(Color.canopy400)
+        .foregroundStyle(color)
     }
 
     private var repoGlyph: some View {

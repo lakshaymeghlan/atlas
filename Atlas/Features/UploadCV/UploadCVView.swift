@@ -29,7 +29,7 @@ struct UploadCVView: View {
     var body: some View {
         OnboardingScaffold(stageIndex: 0, onBack: onBack) {
             VStack(alignment: .leading, spacing: Space.l) {
-                Eyebrow("YOUR STORY · 1 OF 8")
+                Eyebrow("YOUR STORY · 1 OF 9")
                 Text("Bring your\nexperience in.")
                     .atlasText(.display)
                     .foregroundStyle(Color.canopy900)
