@@ -11,7 +11,7 @@ enum Config {
     static let useShaders = false
 
     /// OAuth callback scheme (registered in Info.plist). Unused until real auth.
-    static let oauthScheme = "atlas"
+    static let oauthScheme = "canopy"
 
     /// Demo mode for hosted previews (Appetize) where the Files picker can't reach
     /// a real filesystem. On: tapping "Upload" attaches a sample CV so a reviewer

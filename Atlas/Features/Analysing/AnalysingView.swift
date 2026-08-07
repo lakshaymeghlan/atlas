@@ -16,7 +16,7 @@ struct AnalysingView: View {
     @State private var failed = false
     @State private var isLongRunning = false
 
-    private let log = Logger(subsystem: "ai.sofsuite.atlas", category: "analysing")
+    private let log = Logger(subsystem: "canopy.ai", category: "analysing")
 
     var body: some View {
         ZStack {

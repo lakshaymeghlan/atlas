@@ -12,7 +12,7 @@ final class AppRouter {
 
     private let auth: AuthStore
     private let profile: ProfileStore
-    private let log = Logger(subsystem: "ai.sofsuite.atlas", category: "router")
+    private let log = Logger(subsystem: "canopy.ai", category: "router")
 
     init(auth: AuthStore, profile: ProfileStore) {
         self.auth = auth

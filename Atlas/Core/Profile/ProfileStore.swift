@@ -12,7 +12,7 @@ final class ProfileStore {
         didSet { LocalStore.save(profile, for: .profile) }
     }
 
-    private let log = Logger(subsystem: "ai.sofsuite.atlas", category: "profile")
+    private let log = Logger(subsystem: "canopy.ai", category: "profile")
 
     init() {
         profile = LocalStore.load(UserProfile.self, for: .profile) ?? UserProfile()

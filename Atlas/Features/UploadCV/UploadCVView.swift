@@ -16,7 +16,7 @@ struct UploadCVView: View {
     @State private var validationError: CVValidation.Failure?
     @State private var importing = false
 
-    private let log = Logger(subsystem: "ai.sofsuite.atlas", category: "upload")
+    private let log = Logger(subsystem: "canopy.ai", category: "upload")
 
     private static let allowedTypes: [UTType] = {
         var types: [UTType] = [.pdf]

@@ -13,7 +13,7 @@ final class AuthStore {
 
     var isSignedIn: Bool { user != nil }
 
-    private let log = Logger(subsystem: "ai.sofsuite.atlas", category: "auth")
+    private let log = Logger(subsystem: "canopy.ai", category: "auth")
 
     init() {
         user = LocalStore.load(AuthUser.self, for: .authUser)

@@ -13,7 +13,7 @@ final class JobsStore {
     /// Companies you're in the pipeline with — shown on the Journey tab.
     var applications: [Application] = Application.samples
 
-    private let log = Logger(subsystem: "ai.sofsuite.atlas", category: "jobs")
+    private let log = Logger(subsystem: "canopy.ai", category: "jobs")
 
     func isSaved(_ id: UUID) -> Bool { saved.contains { $0.id == id } }
 
