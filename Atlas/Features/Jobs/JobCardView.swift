@@ -39,14 +39,14 @@ struct JobCardView: View {
             VStack(alignment: .leading, spacing: Space.s) {
                 Text(match.role)
                     .font(.system(size: 32, weight: .bold))
-                    .foregroundStyle(Color.canopy900)
+                    .foregroundStyle(Color.canopyPaper)
                     .fixedSize(horizontal: false, vertical: true)
                 Text("\(match.company) · \(match.location)")
-                    .atlasText(.body).foregroundStyle(Color.canopy600)
+                    .atlasText(.body).foregroundStyle(Color.canopy200)
             }
 
             FlowLayout(spacing: Space.s) {
-                ForEach(match.tags, id: \.self) { ChipView(text: $0) }
+                ForEach(match.tags, id: \.self) { tag in darkChip(tag) }
             }
 
             if let salary = match.salary {
@@ -54,7 +54,7 @@ struct JobCardView: View {
                     Image(systemName: "banknote").font(.system(size: 13))
                     Text(salary).atlasText(.body)
                 }
-                .foregroundStyle(Color.canopy600)
+                .foregroundStyle(Color.canopy200)
             }
 
             Spacer(minLength: Space.m)
@@ -63,7 +63,7 @@ struct JobCardView: View {
                 Text("Tap to see \(match.company)").atlasText(.meta)
                 Image(systemName: "arrow.right").font(.system(size: 9, weight: .semibold))
             }
-            .foregroundStyle(Color.canopy400)
+            .foregroundStyle(Color.canopy200)
         }
         .cardFace(onTap: flip)
     }
@@ -75,28 +75,28 @@ struct JobCardView: View {
             HStack(alignment: .top, spacing: Space.m) {
                 companyWell(56)
                 VStack(alignment: .leading, spacing: 3) {
-                    Text(match.company).atlasText(.title).foregroundStyle(Color.canopy900)
+                    Text(match.company).atlasText(.title).foregroundStyle(Color.canopyPaper)
                     Text("\(match.industry) · \(match.size) · \(match.stage)")
-                        .atlasText(.caption).foregroundStyle(Color.canopy600)
+                        .atlasText(.caption).foregroundStyle(Color.canopy200)
                 }
                 Spacer(minLength: Space.s)
                 Image(systemName: "arrow.uturn.backward")
                     .font(.system(size: 15, weight: .semibold))
-                    .foregroundStyle(Color.canopy400)
+                    .foregroundStyle(Color.canopy200)
             }
 
             Text(match.about)
-                .atlasText(.body).foregroundStyle(Color.canopy600)
+                .atlasText(.body).foregroundStyle(Color.canopy200)
                 .fixedSize(horizontal: false, vertical: true)
 
             VStack(alignment: .leading, spacing: Space.s) {
-                Eyebrow("WHY IT FITS")
+                Eyebrow("WHY IT FITS", color: Color.canopy200)
                 ForEach(match.reasons, id: \.self) { reason in
                     HStack(alignment: .top, spacing: Space.s) {
                         Image(systemName: "checkmark.circle.fill")
-                            .font(.system(size: 14)).foregroundStyle(Color.canopy600)
+                            .font(.system(size: 14)).foregroundStyle(Color.sun)
                             .padding(.top, 1)
-                        Text(reason).atlasText(.body).foregroundStyle(Color.canopy900)
+                        Text(reason).atlasText(.body).foregroundStyle(Color.canopyPaper)
                     }
                 }
             }
@@ -107,7 +107,7 @@ struct JobCardView: View {
                 Image(systemName: "arrow.uturn.backward").font(.system(size: 9, weight: .semibold))
                 Text("Tap to flip back").atlasText(.meta)
             }
-            .foregroundStyle(Color.canopy400)
+            .foregroundStyle(Color.canopy200)
         }
         .cardFace(onTap: flip)
     }
@@ -116,33 +116,42 @@ struct JobCardView: View {
 
     private func companyWell(_ size: CGFloat) -> some View {
         RoundedRectangle(cornerRadius: Radius.card, style: .continuous)
-            .fill(Color.canopyMist)
+            .fill(Color.canopyPaper.opacity(0.12))
             .frame(width: size, height: size)
             .overlay(
                 Text(String(match.company.prefix(1)))
                     .font(.system(size: size * 0.42, weight: .semibold))
-                    .foregroundStyle(Color.canopy600)
+                    .foregroundStyle(Color.canopyPaper)
             )
     }
 
     private var matchBadge: some View {
         Text("\(match.match)% match")
             .font(.system(size: 12, weight: .semibold))
-            .foregroundStyle(Color.canopy600)
+            .foregroundStyle(Color.canopy900)
             .padding(.vertical, 6)
             .padding(.horizontal, 11)
-            .background(Capsule().fill(Color.canopyMist))
+            .background(Capsule().fill(Color.sun))
     }
 
     private var saveButton: some View {
         Button(action: onToggleSave) {
             Image(systemName: isSaved ? "bookmark.fill" : "bookmark")
                 .font(.system(size: 16, weight: .medium))
-                .foregroundStyle(isSaved ? Color.canopy600 : Color.canopy600)
+                .foregroundStyle(isSaved ? Color.sun : Color.canopyPaper)
                 .frame(width: 40, height: 40)
-                .background(Circle().fill(isSaved ? Color.canopyMist : Color.canopyMist))
+                .background(Circle().fill(Color.canopyPaper.opacity(0.12)))
         }
         .accessibilityLabel(isSaved ? "Saved" : "Save job")
+    }
+
+    /// Tag chip tuned for the dark card — subtle translucent fill, light text.
+    private func darkChip(_ text: String) -> some View {
+        Text(text)
+            .font(.system(size: 14, weight: .medium))
+            .foregroundStyle(Color.canopyPaper)
+            .padding(.horizontal, Space.m).padding(.vertical, Space.s)
+            .background(Capsule().fill(Color.canopyPaper.opacity(0.10)))
     }
 }
 
@@ -172,10 +181,10 @@ private extension View {
         let shape = RoundedRectangle(cornerRadius: Radius.sheet, style: .continuous)
         return padding(Space.screen)
             .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
-            .background(shape.fill(.white))
-            .overlay(shape.strokeBorder(Color.canopyPaperLine.opacity(0.7), lineWidth: 1))
+            .background(shape.fill(Color.canopy900))
+            .overlay(shape.strokeBorder(Color.canopyPaper.opacity(0.10), lineWidth: 1))
             .clipShape(shape)
-            .shadow(color: Color.canopy900.opacity(0.07), radius: 18, x: 0, y: 10)
+            .shadow(color: Color.canopy900.opacity(0.28), radius: 22, x: 0, y: 12)
             .contentShape(shape)
             .onTapGesture(perform: onTap)
     }

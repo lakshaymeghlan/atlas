@@ -74,41 +74,44 @@ private struct JourneyCard: View {
             header
             if isOpen {
                 VStack(alignment: .leading, spacing: Space.l) {
-                    Divider().overlay(Color.canopyPaperLine)
                     pipeline
                     prep
                 }
-                .padding(.horizontal, Space.l)
-                .padding(.bottom, Space.l)
+                .padding(Space.l)
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .background(Color.canopyPaperDeep)
                 .transition(.opacity.combined(with: .move(edge: .top)))
             }
         }
-        .background(RoundedRectangle(cornerRadius: Radius.card, style: .continuous).fill(Color.canopyPaperDeep))
+        .clipShape(RoundedRectangle(cornerRadius: Radius.card, style: .continuous))
         .overlay(RoundedRectangle(cornerRadius: Radius.card, style: .continuous).strokeBorder(Color.canopyPaperLine, lineWidth: 1))
     }
 
+    // Dark header — the "blend": navy top, light body when expanded.
     private var header: some View {
         Button(action: toggle) {
             HStack(spacing: Space.m) {
                 RoundedRectangle(cornerRadius: Radius.chip, style: .continuous)
-                    .fill(Color.canopyMist)
+                    .fill(Color.canopyPaper.opacity(0.12))
                     .frame(width: 44, height: 44)
                     .overlay(Text(String(app.match.company.prefix(1)))
-                        .font(Typeface.display(20)).foregroundStyle(Color.canopy600))
+                        .font(Typeface.display(20)).foregroundStyle(Color.canopyPaper))
                 VStack(alignment: .leading, spacing: 2) {
-                    Text(app.match.role).atlasText(.bodyStrong).foregroundStyle(Color.canopy900)
+                    Text(app.match.role).atlasText(.bodyStrong).foregroundStyle(Color.canopyPaper)
                         .lineLimit(1)
                     Text("\(app.match.company) · \(app.match.location)")
-                        .atlasText(.caption).foregroundStyle(Color.canopy400).lineLimit(1)
+                        .atlasText(.caption).foregroundStyle(Color.canopy200).lineLimit(1)
                 }
                 Spacer(minLength: Space.s)
-                VStack(alignment: .trailing, spacing: 4) {
+                VStack(alignment: .trailing, spacing: 6) {
                     stagePill
                     Image(systemName: isOpen ? "chevron.up" : "chevron.down")
-                        .font(.system(size: 12, weight: .semibold)).foregroundStyle(Color.canopy400)
+                        .font(.system(size: 12, weight: .semibold)).foregroundStyle(Color.canopy200)
                 }
             }
             .padding(Space.l)
+            .frame(maxWidth: .infinity)
+            .background(Color.canopy900)
         }
         .buttonStyle(.plain)
     }
@@ -118,41 +121,57 @@ private struct JourneyCard: View {
             .font(.system(size: 11, weight: .semibold))
             .foregroundStyle(Color.canopy900)
             .padding(.horizontal, 10).padding(.vertical, 4)
-            .background(Capsule().fill(Color.sun.opacity(0.35)))
-            .overlay(Capsule().strokeBorder(Color.sun, lineWidth: 1))
+            .background(Capsule().fill(Color.sun))
     }
 
-    // Vertical stepper — done stages filled, current highlighted, future muted.
+    // Horizontal tracker — order-tracking style. Line fills amber to the current
+    // stage; done stages get a check, current gets a ring, future are muted.
     private var pipeline: some View {
-        VStack(alignment: .leading, spacing: 0) {
-            ForEach(PipelineStage.allCases) { s in
-                let done = s.rawValue < app.stage.rawValue
-                let current = s == app.stage
-                HStack(alignment: .center, spacing: Space.m) {
-                    VStack(spacing: 0) {
+        let current = app.stage.rawValue
+        let stages = PipelineStage.allCases
+        return VStack(alignment: .leading, spacing: Space.s) {
+            Text("Stage \(current + 1) of \(stages.count) · \(app.stage.label)")
+                .atlasText(.caption).foregroundStyle(Color.canopy600)
+            HStack(spacing: 0) {
+                ForEach(stages) { s in
+                    let i = s.rawValue
+                    VStack(spacing: 7) {
                         ZStack {
-                            Circle()
-                                .fill(done || current ? Color.sun : Color.canopyMist)
-                                .frame(width: 20, height: 20)
-                            if done {
-                                Image(systemName: "checkmark").font(.system(size: 10, weight: .bold))
-                                    .foregroundStyle(Color.canopy900)
-                            } else if current {
-                                Circle().fill(Color.canopy900).frame(width: 7, height: 7)
+                            HStack(spacing: 0) {
+                                connector(filled: i <= current, hidden: i == 0)       // left half
+                                connector(filled: i < current, hidden: i == stages.count - 1) // right half
                             }
+                            node(i: i, current: current)
                         }
-                        if s != PipelineStage.allCases.last {
-                            Rectangle()
-                                .fill(done ? Color.sun : Color.canopyPaperLine)
-                                .frame(width: 2, height: 22)
-                        }
+                        .frame(height: 22)
+                        Text(s.short)
+                            .font(.system(size: 9.5, weight: i == current ? .semibold : .regular))
+                            .foregroundStyle(i == current ? Color.canopy900 : (i < current ? Color.canopy600 : Color.canopy400))
+                            .lineLimit(1).minimumScaleFactor(0.8)
                     }
-                    Text(s.label)
-                        .font(Typeface.body(15, weight: current ? .medium : .regular))
-                        .foregroundStyle(current ? Color.canopy900 : (done ? Color.canopy600 : Color.canopy400))
-                        .padding(.bottom, s != PipelineStage.allCases.last ? 22 : 0)
-                    Spacer()
+                    .frame(maxWidth: .infinity)
                 }
+            }
+        }
+    }
+
+    private func connector(filled: Bool, hidden: Bool) -> some View {
+        Rectangle()
+            .fill(hidden ? Color.clear : (filled ? Color.sun : Color.canopyPaperLine))
+            .frame(height: 2)
+    }
+
+    @ViewBuilder private func node(i: Int, current: Int) -> some View {
+        let done = i < current
+        let isCurrent = i == current
+        ZStack {
+            Circle().fill(done || isCurrent ? Color.sun : Color.canopyMist)
+                .frame(width: isCurrent ? 22 : 18, height: isCurrent ? 22 : 18)
+            if isCurrent {
+                Circle().strokeBorder(Color.canopy900, lineWidth: 2).frame(width: 22, height: 22)
+            }
+            if done {
+                Image(systemName: "checkmark").font(.system(size: 9, weight: .bold)).foregroundStyle(Color.canopy900)
             }
         }
     }

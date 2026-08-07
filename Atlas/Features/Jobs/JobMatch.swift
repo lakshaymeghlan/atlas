@@ -80,6 +80,17 @@ enum PipelineStage: Int, CaseIterable, Identifiable {
         case .offer: "Final decision"
         }
     }
+
+    /// Compact label for the horizontal tracker.
+    var short: String {
+        switch self {
+        case .applied: "Applied"
+        case .screening: "Screening"
+        case .interviewing: "Interview"
+        case .roundTwo: "Round 2"
+        case .offer: "Decision"
+        }
+    }
 }
 
 /// A company you're in the pipeline with — the match plus its current stage.

@@ -11,31 +11,52 @@ struct PreferencesFlowView: View {
     var onComplete: () -> Void
     var onBackToUpload: () -> Void
 
-    @State private var step: Step = .arrangement
-    private enum Step: Int, CaseIterable { case arrangement, workType, relocation, priorities, salary, timing }
+    @State private var step: Step = .hobbies
+    @State private var customHobby = ""
+    @FocusState private var hobbyFocused: Bool
+    @State private var countryQuery = ""
+    @State private var suggestions: [String] = []
+    @State private var searchTask: Task<Void, Never>?
+    @FocusState private var countryFocused: Bool
+    private enum Step: Int, CaseIterable { case hobbies, arrangement, workType, relocation, priorities, salary, timing }
+
+    /// Each selection step needs at least one answer before Continue unlocks.
+    private var isStepValid: Bool {
+        switch step {
+        case .hobbies: !prefs.hobbies.isEmpty
+        case .arrangement: !prefs.arrangements.isEmpty
+        case .workType: !prefs.workTypes.isEmpty
+        case .relocation: prefs.openToAnywhere || !prefs.relocationCountries.isEmpty
+        case .priorities, .salary: true
+        case .timing: prefs.startAvailability != nil
+        }
+    }
 
     private var prefs: JobPreferences { store.profile.preferences }
 
     var body: some View {
         Group {
             switch step {
+            case .hobbies:
+                wizardStep(0, "WHAT YOU LOVE", "What makes life\nfeel like yours?",
+                           "Pick up to 5 — the things you'd protect time for.") { hobbiesStep }
             case .arrangement:
-                wizardStep(0, "WORK STYLE", "Where do you\nwant to work?",
+                wizardStep(1, "WORK STYLE", "Where do you\nwant to work?",
                            "Pick any that work for you — remote, hybrid, or in office.") { arrangementStep }
             case .workType:
-                wizardStep(1, "WORK TYPE", "What kind\nof role?",
+                wizardStep(2, "WORK TYPE", "What kind\nof role?",
                            "Select any that fit.") { workTypeStep }
             case .relocation:
-                wizardStep(2, "RELOCATION", "Open to\nrelocating?",
+                wizardStep(3, "RELOCATION", "Open to\nrelocating?",
                            "If a company sponsors your visa, where would you go? Pick any.") { relocationStep }
             case .priorities:
-                wizardStep(3, "PRIORITIES", "What matters most\nin your next move?",
+                wizardStep(4, "PRIORITIES", "What matters most\nin your next move?",
                            "Drag to rank. Your top three shape your matches.") { prioritiesStep }
             case .salary:
-                wizardStep(4, "SALARY", "What salary makes\na move worthwhile?",
+                wizardStep(5, "SALARY", "What salary makes\na move worthwhile?",
                            "This is private. We use it to filter out roles that wouldn't work for you financially.") { salaryStep }
             case .timing:
-                wizardStep(5, "AVAILABILITY", "A couple of\npractical details.",
+                wizardStep(6, "AVAILABILITY", "A couple of\npractical details.",
                            "Almost done — when could you start?") { timingStep }
             }
         }
@@ -57,7 +78,8 @@ struct PreferencesFlowView: View {
             }
             content()
         } bottom: {
-            AtlasButton(index == 5 ? "Review my profile →" : "Continue →") { advance() }
+            AtlasButton(index == Step.allCases.count - 1 ? "Review my profile →" : "Continue →",
+                        isEnabled: isStepValid) { advance() }
         }
     }
 
@@ -71,6 +93,60 @@ struct PreferencesFlowView: View {
     }
 
     // MARK: Steps
+
+    private var hobbiesStep: some View {
+        let atMax = prefs.hobbies.count >= Hobbies.maxSelectable
+        // Custom-added hobbies (not in the preset list) appear as selected chips too.
+        let customs = prefs.hobbies.filter { !Hobbies.options.contains($0) }.sorted()
+        return VStack(alignment: .leading, spacing: Space.m) {
+            FlowLayout(spacing: Space.s) {
+                ForEach(Hobbies.options + customs, id: \.self) { h in
+                    let on = prefs.hobbies.contains(h)
+                    PrefChip(text: h, selected: on) { toggleHobby(h) }
+                        .opacity(!on && atMax ? 0.4 : 1)
+                }
+            }
+            addOwnField(atMax: atMax)
+        }
+    }
+
+    private func addOwnField(atMax: Bool) -> some View {
+        HStack(spacing: Space.s) {
+            Image(systemName: "plus").font(.system(size: 14, weight: .semibold))
+                .foregroundStyle(Color.canopy400)
+            TextField(atMax ? "That's 5 — remove one to add another" : "Add your own", text: $customHobby)
+                .font(.system(size: 15)).foregroundStyle(Color.canopy900)
+                .autocorrectionDisabled()
+                .submitLabel(.done)
+                .focused($hobbyFocused)
+                .disabled(atMax)
+                .onSubmit { addCustomHobby() }
+        }
+        .padding(.horizontal, Space.l)
+        .frame(height: 48)
+        .background(Color.canopyPaperDeep)
+        .clipShape(Capsule())
+        .overlay(Capsule().strokeBorder(hobbyFocused ? Color.canopy600 : Color.canopyPaperLine, lineWidth: 1))
+        .opacity(atMax ? 0.5 : 1)
+    }
+
+    private func addCustomHobby() {
+        let h = customHobby.trimmingCharacters(in: .whitespacesAndNewlines)
+        customHobby = ""
+        guard !h.isEmpty, prefs.hobbies.count < Hobbies.maxSelectable,
+              !prefs.hobbies.contains(where: { $0.caseInsensitiveCompare(h) == .orderedSame }) else { return }
+        UIImpactFeedbackGenerator(style: .soft).impactOccurred(intensity: 0.4)
+        store.profile.preferences.hobbies.insert(h)
+    }
+
+    private func toggleHobby(_ h: String) {
+        UIImpactFeedbackGenerator(style: .soft).impactOccurred(intensity: 0.4)
+        if prefs.hobbies.contains(h) {
+            store.profile.preferences.hobbies.remove(h)
+        } else if prefs.hobbies.count < Hobbies.maxSelectable {
+            store.profile.preferences.hobbies.insert(h)
+        }
+    }
 
     private var arrangementStep: some View {
         FlowLayout(spacing: Space.s) {
@@ -93,12 +169,15 @@ struct PreferencesFlowView: View {
     }
 
     private var relocationStep: some View {
-        VStack(alignment: .leading, spacing: Space.m) {
+        // Popular chips plus any country the person searched for and added.
+        let customs = prefs.relocationCountries.filter { !Relocation.destinations.contains($0) }.sorted()
+        return VStack(alignment: .leading, spacing: Space.m) {
             PrefChip(text: "Open to anywhere", selected: prefs.openToAnywhere) {
                 store.profile.preferences.openToAnywhere.toggle()
             }
+            countrySearch
             FlowLayout(spacing: Space.s) {
-                ForEach(Relocation.destinations, id: \.self) { c in
+                ForEach(Relocation.destinations + customs, id: \.self) { c in
                     PrefChip(text: c, selected: prefs.relocationCountries.contains(c)) {
                         toggleCountry(c)
                     }
@@ -107,13 +186,82 @@ struct PreferencesFlowView: View {
         }
     }
 
+    private var countrySearch: some View {
+        VStack(alignment: .leading, spacing: Space.xs) {
+            HStack(spacing: Space.s) {
+                Image(systemName: "magnifyingglass").font(.system(size: 14)).foregroundStyle(Color.canopy400)
+                TextField("Search a country", text: $countryQuery)
+                    .font(.system(size: 15)).foregroundStyle(Color.canopy900)
+                    .autocorrectionDisabled().submitLabel(.done)
+                    .focused($countryFocused)
+                    .onSubmit { if let first = suggestions.first { addCountry(first) } }
+            }
+            .padding(.horizontal, Space.l).frame(height: 48)
+            .background(Color.canopyPaperDeep).clipShape(Capsule())
+            .overlay(Capsule().strokeBorder(countryFocused ? Color.canopy600 : Color.canopyPaperLine, lineWidth: 1))
+            .onChange(of: countryQuery) { _, q in scheduleSearch(q) }
+
+            if !suggestions.isEmpty {
+                VStack(spacing: 0) {
+                    ForEach(suggestions, id: \.self) { s in
+                        Button { addCountry(s) } label: {
+                            HStack {
+                                Text(s).font(.system(size: 15)).foregroundStyle(Color.canopy900)
+                                Spacer()
+                                Image(systemName: "plus").font(.system(size: 13, weight: .semibold))
+                                    .foregroundStyle(Color.canopy400)
+                            }
+                            .padding(.horizontal, Space.l).frame(height: 44)
+                            .contentShape(Rectangle())
+                        }
+                        .buttonStyle(.plain)
+                        if s != suggestions.last {
+                            Divider().overlay(Color.canopyPaperLine).padding(.leading, Space.l)
+                        }
+                    }
+                }
+                .background(RoundedRectangle(cornerRadius: 14, style: .continuous).fill(Color.canopyPaperDeep))
+                .overlay(RoundedRectangle(cornerRadius: 14, style: .continuous).strokeBorder(Color.canopyPaperLine, lineWidth: 1))
+            }
+        }
+    }
+
+    // Debounced (250ms) prefix-first search over the full country list.
+    private func scheduleSearch(_ q: String) {
+        searchTask?.cancel()
+        let query = q.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard query.count >= 2 else { suggestions = []; return }
+        searchTask = Task { @MainActor in
+            try? await Task.sleep(for: .milliseconds(250))
+            if Task.isCancelled { return }
+            let ql = query.lowercased()
+            let matches = Relocation.allCountries.filter {
+                !store.profile.preferences.relocationCountries.contains($0)
+                    && $0.range(of: query, options: [.caseInsensitive, .diacriticInsensitive]) != nil
+            }
+            let ranked = matches.sorted {
+                let ap = $0.lowercased().hasPrefix(ql), bp = $1.lowercased().hasPrefix(ql)
+                return ap == bp ? $0 < $1 : ap
+            }
+            suggestions = Array(ranked.prefix(6))
+        }
+    }
+
+    private func addCountry(_ c: String) {
+        UIImpactFeedbackGenerator(style: .soft).impactOccurred(intensity: 0.4)
+        store.profile.preferences.relocationCountries.insert(c)
+        countryQuery = ""
+        suggestions = []
+        countryFocused = false
+    }
+
     private var prioritiesStep: some View {
         List {
             ForEach(prefs.priorities) { p in
                 priorityRow(p)
-                    .listRowInsets(EdgeInsets(top: 4, leading: 0, bottom: 4, trailing: 0))
-                    .listRowBackground(Color.clear)
-                    .listRowSeparator(.hidden)
+                    .listRowInsets(EdgeInsets(top: 0, leading: Space.l, bottom: 0, trailing: Space.m))
+                    .listRowBackground(rowTint(p))
+                    .listRowSeparatorTint(Color.canopyPaperLine)
             }
             .onMove { from, to in
                 store.profile.preferences.priorities.move(fromOffsets: from, toOffset: to)
@@ -123,7 +271,14 @@ struct PreferencesFlowView: View {
         .scrollContentBackground(.hidden)
         .scrollDisabled(true)
         .environment(\.editMode, .constant(.active))
-        .frame(height: CGFloat(prefs.priorities.count) * 62)
+        .frame(height: CGFloat(prefs.priorities.count) * 52)
+        .clipShape(RoundedRectangle(cornerRadius: Radius.card, style: .continuous))
+        .overlay(RoundedRectangle(cornerRadius: Radius.card, style: .continuous)
+            .strokeBorder(Color.canopyPaperLine, lineWidth: 1))
+    }
+
+    private func rowTint(_ p: WorkPriority) -> Color {
+        (prefs.priorities.firstIndex(of: p) ?? 0) < 3 ? Color.sun.opacity(0.14) : Color.canopyPaper
     }
 
     private func priorityRow(_ p: WorkPriority) -> some View {
@@ -131,21 +286,16 @@ struct PreferencesFlowView: View {
         let top3 = idx < 3
         return HStack(spacing: Space.m) {
             ZStack {
-                Circle().fill(top3 ? Color.sun : Color.canopyMist).frame(width: 26, height: 26)
-                Text("\(idx + 1)").font(.system(size: 13, weight: .semibold))
+                Circle().fill(top3 ? Color.sun : Color.canopyMist).frame(width: 24, height: 24)
+                Text("\(idx + 1)").font(.system(size: 12, weight: .semibold))
                     .foregroundStyle(top3 ? Color.canopy900 : Color.canopy600)
             }
             Text(p.label)
-                .font(Typeface.body(16, weight: .medium))
-                .foregroundStyle(top3 ? Color.canopyPaper : Color.canopy900)
+                .font(Typeface.body(16, weight: top3 ? .medium : .regular))
+                .foregroundStyle(Color.canopy900)
             Spacer()
         }
-        .padding(.horizontal, Space.l)
-        .frame(height: 54)
-        .background(RoundedRectangle(cornerRadius: 14, style: .continuous)
-            .fill(top3 ? Color.canopy800 : Color.canopyPaperDeep))
-        .overlay(RoundedRectangle(cornerRadius: 14, style: .continuous)
-            .strokeBorder(Color.canopyPaperLine, lineWidth: top3 ? 0 : 1))
+        .frame(height: 52)
     }
 
     private var salaryStep: some View {
