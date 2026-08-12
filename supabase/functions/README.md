@@ -3,7 +3,7 @@
 Supabase Edge Functions (Deno). Two are live so far:
 
 | Function        | Does                                                             | Auth/keys        |
-|-----------------|-----------------------------------------------------------------|------------------|
+|-----------------| -----------------------------------------------------------------|------------------|
 | `parse-cv`      | CV (PDF/DOCX/link) → **raw extracted text**                     | none             |
 | `import-github` | GitHub username → public profile + repos (app's `GitHubData`)   | `GITHUB_TOKEN`\* |
 
