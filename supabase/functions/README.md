@@ -7,7 +7,7 @@ Supabase Edge Functions (Deno). Two are live so far:
 | `parse-cv`      | CV (PDF/DOCX/link) → **raw extracted text**                     | none             |
 | `import-github` | GitHub username → public profile + repos (app's `GitHubData`)   | `GITHUB_TOKEN`\* |
 
-\* optional — raises the rate limit and enables the real `contributionsLastYear` (GraphQL); it's `0` without a token.
+\* optional — raises the rate limit and enables the real `contributionsLastYear` (GraphQL); it's `0` without a token. 
 
 > **AI structuring is deliberately not wired yet.** `parse-cv` returns text; turning that
 > text into a structured `CVParseResult` is the next step (add the model call).
