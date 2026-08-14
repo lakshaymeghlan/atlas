@@ -10,7 +10,7 @@ Supabase Edge Functions (Deno). Two are live so far:
 \* optional — raises the rate limit and enables the real `contributionsLastYear` (GraphQL); it's `0` without a token. 
 
 > **AI structuring is deliberately not wired yet.** `parse-cv` returns text; turning that
-> text into a structured `CVParseResult` is the next step (add the model call).
+> text into a structured `CVParseResult`  is the next step (add the model call).
 > **LinkedIn:** there's no API that returns experience/connections for indie devs. The
 > working path is exporting your LinkedIn profile as PDF and running it through `parse-cv`.
 
