@@ -170,13 +170,20 @@ struct UploadCVView: View {
         let scoped = url.startAccessingSecurityScopedResource()
         defer { if scoped { url.stopAccessingSecurityScopedResource() } }
 
-        guard let data = try? Data(contentsOf: url) else {
-            validationError = .empty
+        // Judge it on the advertised type + size *before* reading: a 2 GB "CV"
+        // must not be pulled into memory just to be turned down. When the size
+        // isn't advertised, pass the limit so only the type gates here and the
+        // empty case is caught on the read below.
+        let filename = url.lastPathComponent
+        let declaredSize = try? url.resourceValues(forKeys: [.fileSizeKey]).fileSize
+        if let failure = CVValidation.validate(filename: filename,
+                                              byteSize: declaredSize ?? CVValidation.maxBytes) {
+            validationError = failure
+            picked = nil
             return
         }
-        let filename = url.lastPathComponent
-        if let failure = CVValidation.validate(filename: filename, byteSize: data.count) {
-            validationError = failure
+        guard let data = try? Data(contentsOf: url), !data.isEmpty else {
+            validationError = .empty
             picked = nil
             return
         }
