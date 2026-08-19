@@ -97,6 +97,8 @@ enum PipelineStage: Int, CaseIterable, Identifiable {
 struct Application: Identifiable {
     var match: JobMatch
     var stage: PipelineStage
+    /// The optional line sent to the company on accept.
+    var note: String? = nil
     var id: UUID { match.id }
 }
 
