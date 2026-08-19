@@ -32,7 +32,6 @@ struct WelcomeView: View {
     private let margin: CGFloat = 26
     private let wordSettled: CGFloat = 5.28
 
-    private let ease = Animation.timingCurve(0.22, 1, 0.36, 1, duration: 0.5)
     private func ease(_ d: Double) -> Animation { .timingCurve(0.22, 1, 0.36, 1, duration: d) }
 
     var body: some View {

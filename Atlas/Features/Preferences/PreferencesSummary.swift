@@ -40,7 +40,9 @@ struct PreferencesSummary: View {
         let top = Array(prefs.priorities.prefix(3))
         return VStack(alignment: .leading, spacing: Space.s) {
             label("Top priorities")
-            HStack(spacing: Space.s) {
+            // Wraps — three full labels ("Meaningful work" · "Learning & growth"
+            // · "Pay & benefits") don't fit one card-width row.
+            FlowLayout(spacing: Space.s) {
                 ForEach(Array(top.enumerated()), id: \.offset) { i, p in
                     HStack(spacing: 6) {
                         ZStack {
