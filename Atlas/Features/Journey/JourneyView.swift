@@ -75,6 +75,7 @@ private struct JourneyCard: View {
             if isOpen {
                 VStack(alignment: .leading, spacing: Space.l) {
                     pipeline
+                    if let note = app.note { sentNote(note) }
                     prep
                 }
                 .padding(Space.l)
@@ -173,6 +174,16 @@ private struct JourneyCard: View {
             if done {
                 Image(systemName: "checkmark").font(.system(size: 9, weight: .bold)).foregroundStyle(Color.canopy900)
             }
+        }
+    }
+
+    private func sentNote(_ note: String) -> some View {
+        VStack(alignment: .leading, spacing: Space.xs) {
+            Text("YOUR NOTE")
+                .font(.system(size: 11, weight: .semibold, design: .monospaced))
+                .tracking(1.5).foregroundStyle(Color.canopy400)
+            Text(note).atlasText(.caption).foregroundStyle(Color.canopy600)
+                .fixedSize(horizontal: false, vertical: true)
         }
     }
 

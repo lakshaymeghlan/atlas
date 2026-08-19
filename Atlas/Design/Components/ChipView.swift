@@ -1,7 +1,7 @@
 import SwiftUI
 
-/// A skill/language chip. Unselected is `chip` fill / ink; selected (and the
-/// "+N more" overflow chip) is `blueTint` fill / blue.
+/// A skill/language chip on a mist fill. `selected` (and the "+N more" overflow
+/// chip) reads in canopy rather than ink.
 struct ChipView: View {
     let text: String
     var selected: Bool = false
