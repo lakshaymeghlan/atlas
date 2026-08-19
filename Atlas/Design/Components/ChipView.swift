@@ -19,7 +19,7 @@ struct ChipView: View {
         }
         .padding(.horizontal, Space.m)
         .padding(.vertical, Space.s)
-        .background(selected ? Color.canopyMist : Color.canopyMist)
+        .background(Color.canopyMist)
         .clipShape(RoundedRectangle(cornerRadius: Radius.chip, style: .continuous))
     }
 }

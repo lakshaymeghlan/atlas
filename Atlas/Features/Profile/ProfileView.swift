@@ -308,18 +308,29 @@ struct ProfileView: View {
         }
     }
 
+    @ViewBuilder
     private func portfolioCard(_ url: String) -> some View {
-        sectionCard("PORTFOLIO") {
-            Link(destination: URL(string: url.hasPrefix("http") ? url : "https://\(url)") ?? URL(string: "https://atlas.app")!) {
-                HStack(spacing: Space.s) {
-                    Image(systemName: "link").font(.system(size: 13))
-                    Text(url).atlasText(.body).lineLimit(1).truncationMode(.middle)
-                    Spacer(minLength: 0)
-                    Image(systemName: "arrow.up.right").font(.system(size: 12, weight: .semibold))
-                }
-                .foregroundStyle(Color.canopy600)
+        // An unparseable link renders as plain text rather than a dead Link (and
+        // never a force-unwrapped placeholder URL).
+        if let destination = URL(string: url.hasPrefix("http") ? url : "https://\(url)") {
+            sectionCard("PORTFOLIO") {
+                Link(destination: destination) { portfolioRow(url, isLink: true) }
+            }
+        } else {
+            sectionCard("PORTFOLIO") { portfolioRow(url, isLink: false) }
+        }
+    }
+
+    private func portfolioRow(_ url: String, isLink: Bool) -> some View {
+        HStack(spacing: Space.s) {
+            Image(systemName: "link").font(.system(size: 13))
+            Text(url).atlasText(.body).lineLimit(1).truncationMode(.middle)
+            Spacer(minLength: 0)
+            if isLink {
+                Image(systemName: "arrow.up.right").font(.system(size: 12, weight: .semibold))
             }
         }
+        .foregroundStyle(Color.canopy600)
     }
 
     // MARK: Connectors (optional, reversible)
