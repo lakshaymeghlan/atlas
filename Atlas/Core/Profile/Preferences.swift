@@ -16,6 +16,15 @@ struct JobPreferences: Codable, Equatable {
     var salaryOpen: Bool = false
     var minSalary: Int = 65_000
     var startAvailability: StartAvailability? = nil
+
+    /// Every required answer is in. The wizard's own step gates are the same
+    /// conditions; this is what restoration reads so a force-quit on the profile
+    /// review doesn't drop you back at step one of the wizard.
+    var isComplete: Bool {
+        !hobbies.isEmpty && !arrangements.isEmpty && !workTypes.isEmpty
+            && (openToAnywhere || !relocationCountries.isEmpty)
+            && startAvailability != nil
+    }
 }
 
 enum WorkArrangement: String, Codable, CaseIterable, Identifiable {
