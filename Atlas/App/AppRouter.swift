@@ -29,8 +29,8 @@ final class AppRouter {
     nonisolated static func initialState(isSignedIn: Bool, profile: UserProfile) -> JourneyState {
         guard isSignedIn else { return .welcome }
         if profile.isOnboarded { return .home }
-        if profile.hasParsedContent { return .preferences }
-        return .uploadCV
+        guard profile.hasParsedContent else { return .uploadCV }
+        return profile.preferences.isComplete ? .confirmProfile : .preferences
     }
 
     // MARK: Transitions
