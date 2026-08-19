@@ -35,8 +35,16 @@ final class JobsStore {
         guard let match = matches.first(where: { $0.id == id }) else { return }
         matches.removeAll { $0.id == id }
         if !applications.contains(where: { $0.id == id }) {
-            applications.insert(Application(match: match, stage: .applied), at: 0)
+            applications.insert(Application(match: match, stage: .applied, note: note), at: 0)
         }
         log.info("Accepted \(match.role, privacy: .public) @ \(match.company, privacy: .public); note: \(note != nil ? "yes" : "no", privacy: .public)")
+    }
+
+    /// Attach the note written on the accept sheet — the accept itself already
+    /// happened, so this lands on the existing application.
+    func setNote(_ note: String, for id: UUID) {
+        guard let i = applications.firstIndex(where: { $0.id == id }) else { return }
+        applications[i].note = note
+        log.info("Note attached for \(applications[i].match.company, privacy: .public)")
     }
 }

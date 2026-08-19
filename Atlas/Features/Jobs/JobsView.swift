@@ -26,7 +26,8 @@ struct JobsView: View {
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
         .sheet(item: $accepting) { match in
-            AcceptSheet(match: match) { _ in
+            AcceptSheet(match: match) { note in
+                jobs.setNote(note, for: match.id)
                 UINotificationFeedbackGenerator().notificationOccurred(.success)
             }
         }
