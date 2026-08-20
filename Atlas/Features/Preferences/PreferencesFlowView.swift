@@ -1,9 +1,9 @@
 import SwiftUI
 import UIKit
 
-/// S04–09 · The preferences wizard. Six paged steps between the CV analysis and
-/// the profile review — work style, work type, relocation, priorities (drag to
-/// rank), salary, and availability. Each step reuses `OnboardingScaffold` so the
+/// S04–09 · The preferences wizard. Seven paged steps between the CV analysis and
+/// the profile review — interests, work style, work type, relocation, priorities
+/// (drag to rank), salary, and availability. Each step reuses `OnboardingScaffold` so the
 /// progress bar and back nav stay consistent; answers write straight to the
 /// profile so a force-quit resumes intact.
 struct PreferencesFlowView: View {
