@@ -1,12 +1,14 @@
-# Atlas — Phase 1 (prototype)
+# Canopy (repo: Atlas) — Phase 1 prototype
 
-Native iOS app that carries a person through a job transition. You are the raft,
-Atlas is the current. Upload a CV once, tap through the rest.
+Native iOS app that carries a person through a job transition. Upload a CV once,
+tap through the rest.
 
-This repo is the **front door**: Welcome → career path → upload CV → analysing
-(the river) → confirm profile → Home stub. It's a **client-side prototype** —
-no backend yet. Sign-in is stubbed and CV parsing is mocked (see
-[DECISIONS.md](DECISIONS.md)).
+The journey: **Welcome → what brings you here → bring your experience in →
+analysing (the river) → 7-step preferences wizard → profile review → Home**
+(Home · Explore · Journey · Profile tabs). It's a **client-side prototype** —
+sign-in is stubbed, CV parsing is mocked, and the jobs/pipeline data is sample
+data (see [DECISIONS.md](DECISIONS.md)). Two real Supabase edge functions exist
+but aren't wired to the app yet — see [supabase/functions](supabase/functions/README.md).
 
 ## Requirements
 
@@ -17,8 +19,8 @@ no backend yet. Sign-in is stubbed and CV parsing is mocked (see
 ## Run
 
 ```sh
-xcodegen generate      # writes Atlas.xcodeproj from project.yml
-open Atlas.xcodeproj    # then ⌘R on an iPhone 15 simulator (iOS 17+)
+xcodegen generate      # writes Atlas.xcodeproj (and Info.plist) from project.yml
+open Atlas.xcodeproj   # then ⌘R on any iPhone simulator (iOS 17+)
 ```
 
 No secrets, no accounts, no network needed — it runs entirely offline.
@@ -27,36 +29,44 @@ No secrets, no accounts, no network needed — it runs entirely offline.
 
 ```
 Atlas/
-  App/        AtlasApp, AppRouter (journey state machine), Config, RootView
-  Design/     Tokens (colour/type/space/motion), Components/, River/
-  Features/   Welcome, CareerPath, UploadCV, Analysing, ConfirmProfile, Home
-  Core/       Auth/, Profile/ (stores + models), Parsing/ (mock CV parser)
+  App/        AtlasApp, AppRouter (journey state machine), Journey, Config, RootView
+  Design/     Tokens (colour/type/space/motion), Components/, System/, River/
+  Features/   Welcome, UploadCV, Analysing, Preferences, ConfirmProfile,
+              Home (tab shell + dashboard), Jobs, Journey, Profile
+  Core/       Auth/, Profile/ (stores + models + preferences), Parsing/ (mock parser)
   Resources/  Assets.xcassets, Fonts/
-AtlasTests/   decoder, journey restoration, file validation
+AtlasTests/   CV decoder, journey restoration, file validation
 ```
 
 ## The River
 
-The signature. `Current` is the persistent progress river at the top of every
-onboarding screen; `RiverCanvas` is the full-screen moving water on the
-Analysing screen. Both respect Reduce Motion (they freeze to static gradients).
-Preview them in isolation — `Current_Previews`, `RiverCanvas_Previews`.
+`RiverCanvas` is the full-screen moving water on the Analysing screen — drifting
+waves, the CV dissolving into falling lines of text, and an optional Metal ripple
+behind `Config.useShaders`. It respects Reduce Motion (freezes to a static
+gradient), as do the screen transitions. Preview it in isolation via the
+`"River"` preview. Onboarding progress is the minimal `StageProgress` segments in
+`OnboardingScaffold`, not a river.
 
 ## What's stubbed (and where the backend plugs in)
 
 | Real thing | Prototype stand-in | File |
 |---|---|---|
-| Supabase OAuth | fake user on tap | `Core/Auth/AuthStore.swift` |
+| Supabase OAuth | session fabricated on tap | `Core/Auth/AuthStore.swift` |
 | `parse-cv` edge function | delay + canned JSON | `Core/Parsing/MockCVParser.swift` |
+| GitHub / LinkedIn connectors | canned stats + repos | `Core/Parsing/MockIntegrations.swift` |
 | Postgres + Storage | `UserDefaults` JSON | `Core/Profile/ProfileStore.swift` |
+| Matching engine + pipeline | sample matches / applications | `Features/Jobs/JobMatch.swift` |
 
 The mock parser returns the exact JSON shape the real edge function will, so
-`CVParseResult` (and its tests) carry straight over.
+`CVParseResult` (and its tests) carry straight over. Jobs data is in-memory only
+— it resets on relaunch; the profile does not.
 
 ## Demo hooks
 
-The mock parser branches on the picked filename so you can see every path
-without a backend:
+`Config.demoMode` is **on**, so tapping the upload zone attaches a sample CV
+instead of opening the Files picker (hosted previews can't reach a filesystem).
+Flip it off to get the real picker, inline file validation, and the mock parser's
+filename branches:
 
 - normal name → success (canned profile) after ~1.8s
 - name contains `scan` / `image` / `photo` → the clean **failure** state
@@ -68,10 +78,11 @@ to see the river collapse to a static gradient and transitions to plain fades.
 ## Tests
 
 `⌘U` runs the unit tests: CV JSON decoder (incl. malformed / missing-field),
-`JourneyState` restoration, and file validation.
+`JourneyState` restoration (including resuming mid-wizard), and file validation.
 
 ## Quality notes
 
 - Light mode only (dark deferred to Phase 2).
 - Dynamic Type supported and capped at XXL so layouts hold.
 - No force unwraps in app code; `os.Logger` per feature; no `print`.
+- `Features/RolePreferences` is parked, not reachable — the wizard replaced it.
