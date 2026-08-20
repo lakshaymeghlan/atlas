@@ -45,6 +45,7 @@ final class JobsStore {
     func setNote(_ note: String, for id: UUID) {
         guard let i = applications.firstIndex(where: { $0.id == id }) else { return }
         applications[i].note = note
-        log.info("Note attached for \(applications[i].match.company, privacy: .public)")
+        let company = applications[i].match.company
+        log.info("Note attached for \(company, privacy: .public)")
     }
 }
