@@ -10,7 +10,7 @@ sign-in is stubbed, CV parsing is mocked, and the jobs/pipeline data is sample
 data (see [DECISIONS.md](DECISIONS.md)). Two real Supabase edge functions exist
 but aren't wired to the app yet — see [supabase/functions](supabase/functions/README.md).
 
-## Requirements
+## Requirements 
 
 - macOS with **full Xcode 15+** (iOS 17 SDK). Command Line Tools alone can't
   build a SwiftUI app.
