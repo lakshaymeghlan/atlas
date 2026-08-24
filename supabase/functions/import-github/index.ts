@@ -6,8 +6,9 @@
 // that number comes back 0.
 //
 //   POST { username: "octocat" }
-//   → 200 { username, name, avatarUrl, repoCount, followers,
-//           contributionsLastYear, projects:[{name,description,language,stars,forks,pinned}] }
+//   → 200 { username, name, avatarUrl, repoCount, followers, contributionsLastYear,
+//           projects:[{name,description,language,stars,forks,pinned}],
+//           skills:[{name,confidence,repos}] }   — languages they ship in, as skills
 //   → 404 { error: "user not found" }
 //
 // Run:    supabase functions serve import-github --no-verify-jwt
@@ -15,6 +16,7 @@
 
 const GITHUB_TOKEN = Deno.env.get("GITHUB_TOKEN") ?? "";
 const MAX_PROJECTS = 12;
+const MAX_LANGUAGES = 8;
 
 const CORS = {
   "Access-Control-Allow-Origin": "*",
@@ -89,8 +91,9 @@ Deno.serve(async (req) => {
   );
   const repos: GhRepo[] = reposRes.ok ? await reposRes.json() : [];
 
-  const projects = repos
-    .filter((r) => !r.fork)
+  const own = repos.filter((r) => !r.fork);
+
+  const projects = own
     .sort((a, b) => b.stargazers_count - a.stargazers_count)
     .slice(0, MAX_PROJECTS)
     .map((r, i) => ({
@@ -102,6 +105,24 @@ Deno.serve(async (req) => {
       pinned: i < 3, // default: top 3 by stars; the user can re-pin in the app
     }));
 
+  // Languages the person actually ships in, as skills the app can merge onto the
+  // profile (source: .github). Confidence is their share of the person's own
+  // repos, floored so a language used once doesn't read as a core skill: a
+  // language in most repos lands high, a one-off lands under the app's 0.6
+  // review threshold so the user is asked to confirm it.
+  const counts = new Map<string, number>();
+  for (const r of own) if (r.language) counts.set(r.language, (counts.get(r.language) ?? 0) + 1);
+
+  const total = Math.max(1, own.length); // a fork-only account divides by zero otherwise
+  const skills = [...counts.entries()]
+    .sort((a, b) => b[1] - a[1])
+    .slice(0, MAX_LANGUAGES)
+    .map(([name, n]) => ({
+      name,
+      confidence: Math.min(0.95, Math.max(0.4, Number((n / total).toFixed(2)))),
+      repos: n,
+    }));
+
   return json({
     username: user.login,
     name: user.name ?? null,
@@ -110,5 +131,6 @@ Deno.serve(async (req) => {
     followers: user.followers ?? 0,
     contributionsLastYear: await contributionsLastYear(username),
     projects,
+    skills,
   });
 });

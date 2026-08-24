@@ -1,25 +1,30 @@
 // Supabase Edge Function: parse-cv
 //
-// Takes a CV (PDF / DOCX / link), extracts its text, and structures that text
-// into the app's `CVParseResult` shape via Claude. The response body decodes
+// Takes a CV (PDF / DOCX / link or LinkedIn PDF export), extracts its text, and
+// structures it into the app's `CVParseResult` shape. The response body decodes
 // directly as `CVParseResult` — extraction metadata rides alongside it under
 // keys the app's decoder ignores.
 //
-//   POST { kind: "file", filename, base64 }   — a picked CV file
+// Structuring is deterministic (see rules.ts) — no API key, no per-CV cost. If
+// ANTHROPIC_API_KEY is set, the model path (structure.ts) is used instead and
+// handles layouts the rules miss; the rules parse remains the fallback when it
+// errors. `method` says which one produced the response.
+//
+//   POST { kind: "file", filename, base64 }   — a picked CV / LinkedIn PDF export
 //   POST { kind: "link", url }                 — a portfolio / profile URL
 //   → 200 { full_name, headline, location, experiences, education, skills,
-//           languages, source, chars, pages?, structured: true }
-//   → 200 { source, chars, pages?, text, structured: false }  — no ANTHROPIC_API_KEY set
+//           languages, source, chars, pages?, structured: true, method }
+//   → 200 { source, chars, pages?, text, structured: false }  — text wasn't CV-shaped
 //   → 422 { error: "no_text" }                  — nothing extractable (e.g. scanned image)
 //   → 4xx/5xx { error }
 //
 // Run locally:  supabase functions serve parse-cv --no-verify-jwt
 // Deploy:       supabase functions deploy parse-cv
-// Structuring needs ANTHROPIC_API_KEY: supabase secrets set ANTHROPIC_API_KEY=...
 
 import { extractText, getDocumentProxy } from "npm:unpdf@0.12.1";
 import mammoth from "npm:mammoth@1.8.0";
 import { Buffer } from "node:buffer";
+import { isUsable, parseCV } from "./rules.ts";
 import { structureCV } from "./structure.ts";
 
 const MAX_BYTES = 20 * 1024 * 1024; // 20 MB
@@ -56,10 +61,53 @@ function stripHtml(html: string): string {
     .trim();
 }
 
+/**
+ * PDF → text, with the line breaks preserved.
+ *
+ * `extractText(..., {mergePages: true})` returns the whole document as a single
+ * space-joined string, which throws away exactly the structure a CV carries in
+ * its layout — headings, one role per line, dates beside them. So walk the text
+ * layer instead and rebuild lines from the glyph geometry: group items by their
+ * baseline (PDF y grows upward, so descending y is top-to-bottom), then order
+ * each line left to right.
+ *
+ * ponytail: y-bucketing merges side-by-side columns into one line, so a
+ * two-column CV still interleaves. Fix by splitting on large x-gaps if real
+ * multi-column CVs turn out to matter.
+ */
 async function pdfText(bytes: Uint8Array): Promise<{ text: string; pages: number }> {
   const pdf = await getDocumentProxy(bytes);
-  const { text, totalPages } = await extractText(pdf, { mergePages: true });
-  return { text: (text as string).trim(), pages: totalPages };
+  const out: string[] = [];
+
+  for (let n = 1; n <= pdf.numPages; n++) {
+    const content = await (await pdf.getPage(n)).getTextContent();
+    const rows = new Map<number, { x: number; s: string }[]>();
+
+    for (const item of content.items as { str?: string; transform?: number[] }[]) {
+      if (!item.str?.trim() || !item.transform) continue;
+      // Bucket the baseline so sub-pixel drift on one visual line stays together.
+      const row = Math.round(item.transform[5] / 3);
+      if (!rows.has(row)) rows.set(row, []);
+      rows.get(row)!.push({ x: item.transform[4], s: item.str });
+    }
+
+    for (const row of [...rows.keys()].sort((a, b) => b - a)) {
+      const line = rows.get(row)!
+        .sort((a, b) => a.x - b.x)
+        .map((i) => i.s)
+        .join(" ")
+        .replace(/\s{2,}/g, " ")
+        .trim();
+      if (line) out.push(line);
+    }
+  }
+
+  const text = out.join("\n").trim();
+  // Some PDFs carry a text layer the geometry walk can't read. Fall back to the
+  // library's flat extraction so we still return the text we can see.
+  if (text) return { text, pages: pdf.numPages };
+  const flat = await extractText(pdf, { mergePages: true });
+  return { text: String(flat.text).trim(), pages: flat.totalPages };
 }
 
 async function extract(payload: Record<string, unknown>): Promise<
@@ -141,18 +189,30 @@ Deno.serve(async (req) => {
 
   const meta = { source: result.source, pages: result.pages, chars: result.text.length };
 
-  let profile;
+  // Rules first — deterministic, free, and testable. The model path is an
+  // opt-in upgrade: it only runs when ANTHROPIC_API_KEY is set, and if it
+  // fails we still have a parse to return rather than nothing.
+  const parsed = parseCV(result.text);
+  let profile: object = parsed;
+  let method = "rules";
+  let note: string | undefined;
+
   try {
-    profile = await structureCV(result.text);
+    const structured = await structureCV(result.text);
+    if (structured) {
+      profile = structured;
+      method = "model";
+    }
   } catch (e) {
-    return json({ error: `structuring failed: ${e instanceof Error ? e.message : e}`, ...meta }, 502);
+    note = `model structuring failed, fell back to rules: ${e instanceof Error ? e.message : e}`;
   }
 
-  // No API key configured: return the extracted text so the extraction stage is
-  // still usable on its own (and says plainly that it isn't structured).
-  if (!profile) return json({ ...meta, text: result.text, structured: false }, 200);
+  // Nothing recognisable in the text — the extraction worked but this document
+  // isn't shaped like a CV. Hand back the text so the client can show something.
+  if (method === "rules" && !isUsable(parsed)) {
+    return json({ ...meta, text: result.text, structured: false, method }, 200);
+  }
 
-  // Structured: the body decodes as CVParseResult; `text` is dropped because the
-  // profile supersedes it and it would double the payload.
-  return json({ ...profile, ...meta, structured: true }, 200);
+  // `text` is dropped: the profile supersedes it and would double the payload.
+  return json({ ...profile, ...meta, structured: true, method, note }, 200);
 });
