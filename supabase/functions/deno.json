@@ -1,6 +1,7 @@
 {
   "imports": {
     "unpdf": "npm:unpdf@0.12.1",
-    "mammoth": "npm:mammoth@1.8.0"
+    "mammoth": "npm:mammoth@1.8.0",
+    "@anthropic-ai/sdk": "npm:@anthropic-ai/sdk"
   }
 }
