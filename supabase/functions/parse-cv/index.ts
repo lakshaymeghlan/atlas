@@ -1,22 +1,26 @@
-// Supabase Edge Function: parse-cv  (text-extraction stage)
+// Supabase Edge Function: parse-cv
 //
-// Takes a CV (PDF / DOCX / link) and returns its raw text. The AI step that
-// turns this text into a structured profile (CVParseResult) is added later —
-// this stage is just reliable extraction so the rest can be built and tested.
+// Takes a CV (PDF / DOCX / link), extracts its text, and structures that text
+// into the app's `CVParseResult` shape via Claude. The response body decodes
+// directly as `CVParseResult` — extraction metadata rides alongside it under
+// keys the app's decoder ignores.
 //
 //   POST { kind: "file", filename, base64 }   — a picked CV file
 //   POST { kind: "link", url }                 — a portfolio / profile URL
-//   → 200 { source, chars, pages?, text }
+//   → 200 { full_name, headline, location, experiences, education, skills,
+//           languages, source, chars, pages?, structured: true }
+//   → 200 { source, chars, pages?, text, structured: false }  — no ANTHROPIC_API_KEY set
 //   → 422 { error: "no_text" }                  — nothing extractable (e.g. scanned image)
 //   → 4xx/5xx { error }
 //
 // Run locally:  supabase functions serve parse-cv --no-verify-jwt
 // Deploy:       supabase functions deploy parse-cv
-//
-// TODO(ai): add the structuring call (text → CVParseResult) once wired up.
+// Structuring needs ANTHROPIC_API_KEY: supabase secrets set ANTHROPIC_API_KEY=...
 
 import { extractText, getDocumentProxy } from "npm:unpdf@0.12.1";
 import mammoth from "npm:mammoth@1.8.0";
+import { Buffer } from "node:buffer";
+import { structureCV } from "./structure.ts";
 
 const MAX_BYTES = 20 * 1024 * 1024; // 20 MB
 
@@ -67,8 +71,10 @@ async function extract(payload: Record<string, unknown>): Promise<
     const filename = String(payload.filename ?? "cv");
     const base64 = String(payload.base64 ?? "");
     if (!base64) return { error: "missing base64", status: 400 };
+    // Reject on the encoded length before decoding — base64 carries 3 bytes per
+    // 4 chars, so this bounds the allocation instead of doubling it first.
+    if (base64.length / 4 * 3 > MAX_BYTES) return { error: "file too large", status: 413 };
     const bytes = b64ToBytes(base64);
-    if (bytes.byteLength > MAX_BYTES) return { error: "file too large", status: 413 };
 
     if (/\.pdf$/i.test(filename)) {
       const { text, pages } = await pdfText(bytes);
@@ -76,7 +82,8 @@ async function extract(payload: Record<string, unknown>): Promise<
       return { source: "pdf", text, pages };
     }
     if (/\.docx$/i.test(filename)) {
-      const { value } = await mammoth.extractRawText({ buffer: bytes });
+      // mammoth's documented input is a Node Buffer, not a bare Uint8Array.
+      const { value } = await mammoth.extractRawText({ buffer: Buffer.from(bytes) });
       const text = (value ?? "").trim();
       if (text.length < 30) return { error: "no_text", status: 422 };
       return { source: "docx", text };
@@ -94,6 +101,9 @@ async function extract(payload: Record<string, unknown>): Promise<
       return { error: "could not fetch link", status: 400 };
     }
     if (!res.ok) return { error: `link returned ${res.status}`, status: 400 };
+    // Refuse an oversized body on its advertised length, before reading it.
+    const declared = Number(res.headers.get("content-length") ?? 0);
+    if (declared > MAX_BYTES) return { error: "file too large", status: 413 };
     const ctype = res.headers.get("content-type") ?? "";
     if (ctype.includes("application/pdf")) {
       const buf = new Uint8Array(await res.arrayBuffer());
@@ -129,5 +139,20 @@ Deno.serve(async (req) => {
   }
   if ("error" in result) return json({ error: result.error }, result.status);
 
-  return json({ ...result, chars: result.text.length }, 200);
+  const meta = { source: result.source, pages: result.pages, chars: result.text.length };
+
+  let profile;
+  try {
+    profile = await structureCV(result.text);
+  } catch (e) {
+    return json({ error: `structuring failed: ${e instanceof Error ? e.message : e}`, ...meta }, 502);
+  }
+
+  // No API key configured: return the extracted text so the extraction stage is
+  // still usable on its own (and says plainly that it isn't structured).
+  if (!profile) return json({ ...meta, text: result.text, structured: false }, 200);
+
+  // Structured: the body decodes as CVParseResult; `text` is dropped because the
+  // profile supersedes it and it would double the payload.
+  return json({ ...profile, ...meta, structured: true }, 200);
 });
