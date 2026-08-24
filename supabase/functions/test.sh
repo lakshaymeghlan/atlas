@@ -58,7 +58,44 @@ Figma, Design systems, Prototyping, SwiftUI, Accessibility
 LANGUAGES
 English (Native), German (Professional)'
 
+# LinkedIn "Save to PDF" layout: sidebar first, company above role.
+LI_TEXT='Contact
+www.linkedin.com/in/jordanrivera
+(LinkedIn)
+
+Top Skills
+Figma
+Design Systems
+
+Languages
+English (Native or Bilingual)
+
+Jordan Rivera
+Senior Product Designer
+Berlin, Germany
+
+Summary
+Product designer focused on tools for people in transition.
+
+Experience
+
+Riverbank
+Senior Product Designer
+January 2022 - Present (2 years 4 months)
+Berlin, Germany
+
+Northwind Labs
+Product Designer
+June 2019 - December 2021 (2 years 7 months)
+
+Education
+
+University of the Arts
+BA, Communication Design (2014 - 2018)'
+
 printf '%s' "$CV_TEXT" > "$TMP/cv.txt"
+printf '%s' "$LI_TEXT" > "$TMP/linkedin.txt"
+cupsfilter "$TMP/linkedin.txt" > "$TMP/linkedin.pdf" 2>/dev/null
 # Real PDF and DOCX via macOS textutil / cupsfilter.
 textutil -convert docx -output "$TMP/cv.docx" "$TMP/cv.txt" 2>/dev/null
 textutil -convert html -output "$TMP/cv.html" "$TMP/cv.txt" 2>/dev/null
@@ -131,24 +168,48 @@ CORS_HDR=$(curl -si -m 10 -X OPTIONS http://localhost:8791 | grep -ci 'access-co
                       || bad "OPTIONS preflight returns CORS headers" "no ACAO header"
 
 echo
-echo "parse-cv — structuring (CVParseResult contract)"
-if [ "$STRUCTURED" = true ]; then
-  assert "PDF: structured:true"     200 200 '.structured' 'true' "$PDF_BODY"
-  assert "PDF: full_name extracted" 200 200 '.full_name'   '"Jordan Rivera"' "$PDF_BODY"
-  assert "PDF: 2 experiences"       200 200 '(.experiences|length)' '2' "$PDF_BODY"
-  assert "PDF: current role has null end_date" 200 200 \
-         '[.experiences[]|select(.end_date==null)]|length' '1' "$PDF_BODY"
-  assert "PDF: education present"   200 200 '(.education|length)>0' 'true' "$PDF_BODY"
-  assert "PDF: skills present"      200 200 '(.skills|length)>0'    'true' "$PDF_BODY"
-  assert "PDF: languages present"   200 200 '(.languages|length)>0' 'true' "$PDF_BODY"
-  assert "PDF: every experience has confidence 0-1" 200 200 \
-         '[.experiences[]|select(.confidence>=0 and .confidence<=1)]|length == (.experiences|length)' \
-         'true' "$PDF_BODY"
-  assert "DOCX: structured too"     200 200 '.structured' 'true' "$DOCX_BODY"
+echo "parse-cv — structured profile (CVParseResult contract)"
+assert "PDF: structured:true"     200 200 '.structured' 'true' "$PDF_BODY"
+assert "PDF: full_name"           200 200 '.full_name'  '"Jordan Rivera"' "$PDF_BODY"
+assert "PDF: location"            200 200 '.location'   '"Berlin, Germany"' "$PDF_BODY"
+assert "PDF: 2 experiences"       200 200 '(.experiences|length)' '2' "$PDF_BODY"
+assert "PDF: role/company split"  200 200 \
+       '[.experiences[0].role, .experiences[0].company]' \
+       '["Senior Product Designer","Riverbank"]' "$PDF_BODY"
+assert "PDF: current role → null end_date" 200 200 \
+       '[.experiences[]|select(.end_date==null)]|length' '1' "$PDF_BODY"
+assert "PDF: education parsed"    200 200 \
+       '[.education[0].institution, .education[0].degree]' \
+       '["University of the Arts","BA"]' "$PDF_BODY"
+assert "PDF: skills parsed"       200 200 '(.skills|length)>=4' 'true' "$PDF_BODY"
+assert "PDF: languages w/ levels" 200 200 '.languages[0]' \
+       '{"name":"English","level":"Native"}' "$PDF_BODY"
+assert "PDF: confidence in 0-1"   200 200 \
+       'all(.experiences[],.education[],.skills[]; .confidence>=0 and .confidence<=1)' \
+       'true' "$PDF_BODY"
+assert "DOCX: structured too"     200 200 '.structured' 'true' "$DOCX_BODY"
+
+# LinkedIn's export, end to end through the real PDF extractor.
+if [ -s "$TMP/linkedin.pdf" ]; then
+  post 8791 "$(jq -nc --arg b "$(b64 "$TMP/linkedin.pdf")" '{kind:"file",filename:"profile.pdf",base64:$b}')"
+  assert "LinkedIn export: name not taken from sidebar" 200 "$STATUS" \
+         '.full_name' '"Jordan Rivera"' "$BODY"
+  assert "LinkedIn export: company/role not swapped"    200 "$STATUS" \
+         '[.experiences[0].role, .experiences[0].company]' \
+         '["Senior Product Designer","Riverbank"]' "$BODY"
+  assert "LinkedIn export: duration suffix stripped"    200 "$STATUS" \
+         '[.experiences[]|select((.role+.company)|test("year"))]|length' '0' "$BODY"
+  assert "LinkedIn export: top skills from sidebar"     200 "$STATUS" \
+         '(.skills|length)>=2' 'true' "$BODY"
 else
-  assert "no API key → structured:false, text returned" 200 200 \
-         '[.structured, (.text|length>0)]' '[false,true]' "$PDF_BODY"
-  skip "structured CVParseResult assertions" "ANTHROPIC_API_KEY not set"
+  skip "LinkedIn export path" "could not build the fixture PDF"
+fi
+
+if [ "$STRUCTURED" = true ]; then
+  assert "model path used when key present" 200 200 '.method' '"model"' "$PDF_BODY"
+else
+  assert "rules path used with no key"      200 200 '.method' '"rules"' "$PDF_BODY"
+  skip "model-structuring path" "ANTHROPIC_API_KEY not set (rules path verified instead)"
 fi
 
 echo
@@ -161,6 +222,9 @@ assert "octocat: <=3 pinned"    200 "$STATUS" '[.projects[]|select(.pinned)]|len
 assert "octocat: project shape" 200 "$STATUS" \
   '.projects[0]|[has("name"),has("description"),has("language"),has("stars"),has("forks"),has("pinned")]' \
   '[true,true,true,true,true,true]' "$BODY"
+assert "octocat: languages→skills" 200 "$STATUS" '(.skills|type)' '"array"' "$BODY"
+assert "octocat: skill confidence in 0-1" 200 "$STATUS" \
+  'all(.skills[]; .confidence>=0 and .confidence<=1)' 'true' "$BODY"
 post 8792 '{"username":"@octocat"}'
 assert "strips a leading @"      200 "$STATUS" '.username' '"octocat"' "$BODY"
 post 8792 '{"username":"this-user-should-not-exist-9f3a2b"}'
