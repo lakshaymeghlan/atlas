@@ -169,8 +169,21 @@ come back `pinned: true`.
 excluded), so a language in most repos lands high and a one-off lands under 0.6 for the
 user to confirm. Adding it to the app means one new field on `GitHubData`.
 
-## Not wired yet
+## The app talks to these
 
-The iOS app still calls `Core/Parsing/MockCVParser.swift` and `MockIntegrations.swift`.
-Pointing it at these functions needs a deployed project URL + anon key in `Config.swift`
-— that's the next step, not done here.
+`Config.backend` in the app points at them. It defaults to `.localDev`, which is
+`http://localhost:8791` / `:8792` — the simulator reaches your Mac over localhost, so
+start the two functions above and the app parses CVs and imports GitHub for real with
+nothing deployed. (`NSAllowsLocalNetworking` in project.yml permits the http.)
+
+Deployed instead:
+
+```swift
+static let backend: Backend? = .supabase(ref: "<your-ref>", anonKey: "<anon-key>")
+```
+
+Set `backend` to `nil` to go back to the canned `MockCVParser`.
+
+`AtlasTests/BackendClientTests.swift` exercises the app's own networking against these
+functions — real PDFs in, `CVParseResult` out, plus a live `octocat` import. Those tests
+*skip* when the functions aren't running, so `⌘U` stays green offline.

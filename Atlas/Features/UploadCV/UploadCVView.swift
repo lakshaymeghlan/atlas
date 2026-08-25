@@ -8,11 +8,9 @@ import os
 /// provided.
 struct UploadCVView: View {
     var onContinue: (CVSource) -> Void
-    var onSetLinkedIn: (Bool) -> Void = { _ in }
     var onBack: (() -> Void)? = nil
 
     @State private var picked: PickedCV?
-    @State private var linkedInConnected = false
     @State private var validationError: CVValidation.Failure?
     @State private var importing = false
 
@@ -24,7 +22,7 @@ struct UploadCVView: View {
         return types
     }()
 
-    private var canContinue: Bool { picked != nil || linkedInConnected }
+    private var canContinue: Bool { picked != nil }
 
     var body: some View {
         OnboardingScaffold(stageIndex: 0, onBack: onBack) {
@@ -50,15 +48,12 @@ struct UploadCVView: View {
                         .atlasText(.caption)
                         .foregroundStyle(Color.sunDeep)
                 }
+                if Config.demoMode { sampleRow }
                 linkedInCard
             }
         } bottom: {
             AtlasButton("Continue →", isEnabled: canContinue) {
-                if let picked {
-                    onContinue(.file(picked))
-                } else if linkedInConnected {
-                    onContinue(.linkedIn)
-                }
+                if let picked { onContinue(.file(picked)) }
             }
         }
         .fileImporter(isPresented: $importing,
@@ -69,13 +64,49 @@ struct UploadCVView: View {
 
     // MARK: Upload
 
+    /// Bundled CVs, for testing without a file on the device. Real PDFs — tapping
+    /// one goes through the same validation and file row as a picked document.
+    private var sampleRow: some View {
+        VStack(alignment: .leading, spacing: Space.s) {
+            Text("Or try a sample")
+                .atlasText(.caption)
+                .foregroundStyle(Color.canopy400)
+            FlowLayout(spacing: Space.s) {
+                ForEach(SampleCV.allCases) { sample in
+                    Button { attach(sample) } label: {
+                        Text(sample.label)
+                            .font(.system(size: 13, weight: .medium))
+                            .foregroundStyle(Color.canopy600)
+                            .padding(.horizontal, 12).padding(.vertical, 7)
+                            .background(Capsule().fill(Color.canopyMist))
+                    }
+                    .buttonStyle(.plain)
+                    .accessibilityLabel("Use sample: \(sample.label)")
+                }
+            }
+        }
+    }
+
+    private func attach(_ sample: SampleCV) {
+        validationError = nil
+        guard let cv = sample.load() else {
+            log.error("Sample \(sample.filename, privacy: .public) missing from the bundle")
+            return
+        }
+        if let failure = CVValidation.validate(filename: cv.filename, byteSize: cv.byteSize) {
+            validationError = failure
+            return
+        }
+        picked = cv
+    }
+
     private var dropZone: some View {
         Button {
             // Hosted previews (Appetize) have no real Files access — attach a
-            // sample CV so the reviewer can walk the flow instead of hitting a
-            // dead-end picker. Real device builds open the picker.
+            // bundled sample so a reviewer can walk the flow instead of hitting
+            // a dead-end picker. Real device builds open the picker.
             if Config.demoMode {
-                picked = PickedCV(filename: "Alex_Rivera_Resume.pdf", byteSize: 248_000, data: Data())
+                attach(.conventional)
             } else {
                 importing = true
             }
@@ -124,25 +155,26 @@ struct UploadCVView: View {
 
     // MARK: LinkedIn
 
+    /// LinkedIn publishes no API for experience — their OIDC scopes return name,
+    /// email and picture only. The import that actually works is the profile PDF
+    /// the person exports, which is just another CV as far as parsing goes.
     private var linkedInCard: some View {
         Button {
-            let now = !linkedInConnected
-            UIImpactFeedbackGenerator(style: .soft).impactOccurred(intensity: 0.7)
-            withAnimation(.spring(response: 0.35, dampingFraction: 0.8)) { linkedInConnected = now }
-            onSetLinkedIn(now)
+            if Config.demoMode { attach(.linkedIn) } else { importing = true }
         } label: {
             HStack(spacing: Space.m) {
                 BrandMarkView(mark: .linkedIn, size: 30)
                 VStack(alignment: .leading, spacing: 2) {
-                    Text(linkedInConnected ? "LinkedIn connected" : "Connect with LinkedIn")
+                    Text("Import from LinkedIn")
                         .atlasText(.bodyStrong).foregroundStyle(Color.canopy900)
-                    Text(linkedInConnected ? "Your experience and network are in" : "Import your experience and network")
+                    Text("On LinkedIn: Profile → Resources → Save to PDF, then pick it here")
                         .atlasText(.caption).foregroundStyle(Color.canopy400)
+                        .fixedSize(horizontal: false, vertical: true)
                 }
                 Spacer(minLength: Space.s)
-                Image(systemName: linkedInConnected ? "checkmark.circle.fill" : "plus")
-                    .font(.system(size: linkedInConnected ? 20 : 16, weight: .medium))
-                    .foregroundStyle(linkedInConnected ? Color.canopy600 : Color.canopy400)
+                Image(systemName: "arrow.down.doc")
+                    .font(.system(size: 16, weight: .medium))
+                    .foregroundStyle(Color.canopy400)
             }
             .padding(Space.l)
             .frame(maxWidth: .infinity, alignment: .leading)
@@ -150,12 +182,11 @@ struct UploadCVView: View {
             .clipShape(RoundedRectangle(cornerRadius: Radius.card, style: .continuous))
             .overlay(
                 RoundedRectangle(cornerRadius: Radius.card, style: .continuous)
-                    .strokeBorder(linkedInConnected ? Color.canopy600 : Color.canopyPaperLine,
-                                  lineWidth: linkedInConnected ? 1.5 : 1)
+                    .strokeBorder(Color.canopyPaperLine, lineWidth: 1)
             )
         }
         .buttonStyle(.plain)
-        .accessibilityLabel(linkedInConnected ? "LinkedIn connected. Tap to disconnect." : "Connect with LinkedIn")
+        .accessibilityLabel("Import your LinkedIn profile PDF")
     }
 
     // MARK: Import handling

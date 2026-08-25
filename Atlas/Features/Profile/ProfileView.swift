@@ -1,4 +1,5 @@
 import SwiftUI
+import os
 
 /// The user's profile — everything Atlas extracted from GitHub, LinkedIn and the
 /// CV, laid out as a rich, scannable page: a contribution graph, activity stats,
@@ -12,6 +13,14 @@ struct ProfileView: View {
 
     @Environment(ProfileStore.self) private var store
     private var p: UserProfile { store.profile }
+
+    @State private var askingForUsername = false
+    @State private var username = ""
+    @State private var importingLinkedIn = false
+    @State private var busy: BrandMark?
+    @State private var connectError: String?
+
+    private let log = Logger(subsystem: "canopy.ai", category: "profile")
 
     var body: some View {
         VStack(spacing: 0) {
@@ -57,6 +66,64 @@ struct ProfileView: View {
             }
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
+        .alert("Your GitHub username", isPresented: $askingForUsername) {
+            TextField("octocat", text: $username)
+                .textInputAutocapitalization(.never)
+                .autocorrectionDisabled()
+            Button("Import") { Task { await importGitHub() } }
+            Button("Cancel", role: .cancel) {}
+        } message: {
+            Text("We read your public profile — repos, followers, and the languages you ship in.")
+        }
+        .alert("Couldn't import", isPresented: .constant(connectError != nil)) {
+            Button("OK") { connectError = nil }
+        } message: {
+            Text(connectError ?? "")
+        }
+        .fileImporter(isPresented: $importingLinkedIn,
+                      allowedContentTypes: [.pdf],
+                      allowsMultipleSelection: false) { result in
+            Task { await importLinkedIn(result) }
+        }
+    }
+
+    // MARK: Real imports
+
+    private func importGitHub() async {
+        let handle = username.trimmingCharacters(in: .whitespacesAndNewlines)
+            .replacingOccurrences(of: "@", with: "")
+        guard !handle.isEmpty else { return }
+        busy = .github
+        defer { busy = nil }
+        do {
+            let (data, skills) = try await BackendClient.importGitHub(username: handle)
+            withAnimation(.easeInOut(duration: 0.3)) { store.connectGitHub(data, skills: skills) }
+        } catch {
+            log.error("GitHub import failed: \(error.localizedDescription, privacy: .public)")
+            connectError = (error as? LocalizedError)?.errorDescription ?? error.localizedDescription
+        }
+    }
+
+    /// LinkedIn has no API for experience, so the import is the profile PDF the
+    /// person exports (Profile → Resources → Save to PDF) run through parse-cv.
+    private func importLinkedIn(_ result: Result<[URL], Error>) async {
+        guard case .success(let urls) = result, let url = urls.first else { return }
+        let scoped = url.startAccessingSecurityScopedResource()
+        defer { if scoped { url.stopAccessingSecurityScopedResource() } }
+        guard let data = try? Data(contentsOf: url), !data.isEmpty else {
+            connectError = "That file couldn't be read."
+            return
+        }
+        busy = .linkedIn
+        defer { busy = nil }
+        do {
+            let cv = PickedCV(filename: url.lastPathComponent, byteSize: data.count, data: data)
+            let parsed = try await BackendClient.parseCV(.file(cv))
+            withAnimation(.easeInOut(duration: 0.3)) { store.applyLinkedIn(parsed) }
+        } catch {
+            log.error("LinkedIn import failed: \(error.localizedDescription, privacy: .public)")
+            connectError = (error as? LocalizedError)?.errorDescription ?? error.localizedDescription
+        }
     }
 
     // MARK: Nav + header
@@ -115,12 +182,15 @@ struct ProfileView: View {
             VStack(alignment: .leading, spacing: Space.l) {
                 connectedHeader("LINKEDIN") { store.disconnectLinkedIn() }
                 HStack(spacing: 0) {
-                    stat(abbrev(li.connections), "Connections")
+                    stat("\(li.roles)", "Roles imported")
                     statDivider
-                    stat(abbrev(li.followers), "Followers")
+                    stat("\(li.skills)", "Skills imported")
                     statDivider
-                    stat(abbrev(li.posts), "Posts")
+                    stat(li.importedAt.formatted(.dateTime.month().day()), "Imported")
                 }
+                Text("From the profile PDF you exported. LinkedIn offers no API for connections or activity, so nothing here is estimated.")
+                    .atlasText(.caption).foregroundStyle(Color.canopy400)
+                    .fixedSize(horizontal: false, vertical: true)
             }
         }
     }
@@ -131,9 +201,18 @@ struct ProfileView: View {
         AtlasCard {
             VStack(alignment: .leading, spacing: Space.m) {
                 connectedHeader("GITHUB") { store.disconnectGitHub() }
-                ContributionGraph(seed: 7)
-                Text("\(gh.contributionsLastYear.formatted()) contributions in the last year")
-                    .atlasText(.caption).foregroundStyle(Color.canopy400)
+                // The heatmap is only shown when we have a real contribution
+                // count (GitHub's GraphQL API, which needs a token). Drawing a
+                // generated one next to real numbers would be inventing data.
+                if gh.contributionsLastYear > 0 {
+                    ContributionGraph(seed: 7)
+                    Text("\(gh.contributionsLastYear.formatted()) contributions in the last year")
+                        .atlasText(.caption).foregroundStyle(Color.canopy400)
+                } else {
+                    Text("@\(gh.username) · contribution history needs a GITHUB_TOKEN on the backend")
+                        .atlasText(.caption).foregroundStyle(Color.canopy400)
+                        .fixedSize(horizontal: false, vertical: true)
+                }
                 Rectangle().fill(Color.canopyPaperLine).frame(height: 1).padding(.vertical, Space.xs)
                 HStack(spacing: 0) {
                     stat(abbrev(gh.repoCount), "Repos")
@@ -348,9 +427,7 @@ struct ProfileView: View {
     private func connectCard(_ mark: BrandMark) -> some View {
         let isLinkedIn = mark == .linkedIn
         return Button {
-            withAnimation(.easeInOut(duration: 0.3)) {
-                if isLinkedIn { store.connectLinkedIn() } else { store.connectGitHub() }
-            }
+            if isLinkedIn { importingLinkedIn = true } else { askingForUsername = true }
         } label: {
             AtlasCard(padding: Space.l) {
                 HStack(spacing: Space.m) {
@@ -358,14 +435,18 @@ struct ProfileView: View {
                     VStack(alignment: .leading, spacing: 2) {
                         Text(isLinkedIn ? "Connect LinkedIn" : "Connect GitHub")
                             .atlasText(.bodyStrong).foregroundStyle(Color.canopy900)
-                        Text(isLinkedIn ? "Add your network and activity."
-                                        : "Show your contributions and projects.")
+                        Text(isLinkedIn ? "Export your profile as PDF — we read it."
+                                        : "Import your public repos and languages.")
                             .atlasText(.caption).foregroundStyle(Color.canopy600)
                     }
                     Spacer(minLength: Space.s)
-                    Text("Connect")
-                        .font(.system(size: 14, weight: .semibold))
-                        .foregroundStyle(Color.canopy600)
+                    if busy == mark {
+                        ProgressView().controlSize(.small)
+                    } else {
+                        Text(isLinkedIn ? "Import" : "Connect")
+                            .font(.system(size: 14, weight: .semibold))
+                            .foregroundStyle(Color.canopy600)
+                    }
                 }
             }
         }

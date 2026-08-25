@@ -14,6 +14,7 @@ struct AnalysingView: View {
     @Environment(AuthStore.self) private var auth
 
     @State private var failed = false
+    @State private var failureReason: String?
     @State private var isLongRunning = false
 
     private let log = Logger(subsystem: "canopy.ai", category: "analysing")
@@ -53,9 +54,12 @@ struct AnalysingView: View {
                 .atlasText(.display)
                 .foregroundStyle(Color.canopy900)
                 .fixedSize(horizontal: false, vertical: true)
-            Text("Some PDFs are images rather than text. Try a different export, or add your details by hand.")
+            // Say what actually went wrong — a scan, an unreachable backend and a
+            // server error need different things from the user.
+            Text(failureReason ?? "Some PDFs are images rather than text. Try a different export, or add your details by hand.")
                 .atlasText(.body)
                 .foregroundStyle(Color.canopy600)
+                .fixedSize(horizontal: false, vertical: true)
             Spacer()
             VStack(spacing: Space.m) {
                 AtlasButton("Try another file", action: onRetry)
@@ -71,13 +75,17 @@ struct AnalysingView: View {
         // Hold the river for at least 2.5s even if the parse returns sooner.
         async let floor: () = Task.sleep(for: .seconds(2.5))
         do {
-            let result = try await MockCVParser.parse(source)
+            // Real backend when one is configured; the canned parser otherwise.
+            let result = Config.backend == nil
+                ? try await MockCVParser.parse(source)
+                : try await BackendClient.parseCV(source)
             try? await floor
             store.apply(result, email: auth.user?.email)
             log.info("Parse succeeded")
             onFinished()
         } catch {
             log.error("Parse failed: \(error.localizedDescription, privacy: .public)")
+            failureReason = (error as? LocalizedError)?.errorDescription
             withAnimation(Motion.standard(0.3)) { failed = true }
         }
     }
