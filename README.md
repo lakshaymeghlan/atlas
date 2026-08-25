@@ -49,17 +49,23 @@ gradient), as do the screen transitions. Preview it in isolation via the
 
 ## What's stubbed (and where the backend plugs in)
 
-| Real thing | Prototype stand-in | File |
+| Real thing | Status | File |
 |---|---|---|
-| Supabase OAuth | session fabricated on tap | `Core/Auth/AuthStore.swift` |
-| `parse-cv` edge function | delay + canned JSON | `Core/Parsing/MockCVParser.swift` |
-| GitHub / LinkedIn connectors | canned stats + repos | `Core/Parsing/MockIntegrations.swift` |
+| CV / LinkedIn PDF parsing | **real** — `parse-cv` edge function | `Core/Backend/BackendClient.swift` |
+| GitHub import | **real** — `import-github` edge function | `Core/Backend/BackendClient.swift` |
+| Supabase OAuth | stubbed: session fabricated on tap | `Core/Auth/AuthStore.swift` |
 | Postgres + Storage | `UserDefaults` JSON | `Core/Profile/ProfileStore.swift` |
 | Matching engine + pipeline | sample matches / applications | `Features/Jobs/JobMatch.swift` |
 
-The mock parser returns the exact JSON shape the real edge function will, so
-`CVParseResult` (and its tests) carry straight over. Jobs data is in-memory only
-— it resets on relaunch; the profile does not.
+Parsing and GitHub go through the edge functions in
+[supabase/functions](supabase/functions/README.md). `Config.backend` defaults to
+`.localDev`, so start them locally and the simulator uses them over localhost; set it to
+`nil` to fall back to the canned `MockCVParser`. Jobs data is still in-memory —
+it resets on relaunch; the profile does not.
+
+**LinkedIn** has no API for experience or connections, so "Import from LinkedIn" means
+the profile PDF the user exports (Profile → Resources → Save to PDF), read by the same
+parser. Nothing about a LinkedIn network is estimated or invented.
 
 ## Demo hooks
 
@@ -77,8 +83,13 @@ to see the river collapse to a static gradient and transitions to plain fades.
 
 ## Tests
 
-`⌘U` runs the unit tests: CV JSON decoder (incl. malformed / missing-field),
-`JourneyState` restoration (including resuming mid-wizard), and file validation.
+`⌘U` runs 21 tests: CV JSON decoder (incl. malformed / missing-field), `JourneyState`
+restoration (including resuming mid-wizard), file validation, and `BackendClient`
+against the real edge functions — bundled sample PDFs in, `CVParseResult` out, plus a
+live GitHub import. The backend tests skip when the functions aren't running.
+
+The backend has its own suites: `./supabase/functions/test.sh` (40 assertions) and
+`deno test supabase/functions/parse-cv/rules_test.ts` (14).
 
 ## Quality notes
 
@@ -86,3 +97,6 @@ to see the river collapse to a static gradient and transitions to plain fades.
 - Dynamic Type supported and capped at XXL so layouts hold.
 - No force unwraps in app code; `os.Logger` per feature; no `print`.
 - `Features/RolePreferences` is parked, not reachable — the wizard replaced it.
+- `Config.demoMode` offers three bundled sample CVs (`Resources/SampleCVs/`) so the
+  upload path is testable without a file on the device; set it to `false` for the
+  real Files picker.

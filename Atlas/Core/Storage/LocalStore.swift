@@ -8,7 +8,9 @@ enum LocalStore {
         case profile = "atlas.profile"
     }
 
-    private static let defaults = UserDefaults.standard
+    /// Swappable so tests write to a throwaway suite instead of stomping the
+    /// app's real state on the device they run against.
+    static var defaults: UserDefaults = .standard
     private static let encoder = JSONEncoder()
     private static let decoder = JSONDecoder()
 

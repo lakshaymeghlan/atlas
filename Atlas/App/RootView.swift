@@ -28,7 +28,6 @@ struct RootView: View {
                              onBack: router.backToWelcome)
         case .uploadCV:
             UploadCVView(onContinue: router.didPickSource,
-                         onSetLinkedIn: router.setLinkedIn,
                          onBack: router.backToIntent)
         case .analysing(let source):
             AnalysingView(source: source,

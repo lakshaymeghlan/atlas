@@ -45,6 +45,16 @@ targets:
         UISupportedInterfaceOrientations:
           - UIInterfaceOrientationPortrait
         ITSAppUsesNonExemptEncryption: false
+        # Surfaces the app's Documents folder in Files as "Canopy", so sample CVs
+        # dropped there can be picked through the real .fileImporter. Handy for
+        # testing; remove before release if you'd rather not expose Documents.
+        UIFileSharingEnabled: true
+        LSSupportsOpeningDocumentsInPlace: true
+        # Lets the simulator reach edge functions served on this Mac over
+        # http://localhost (Config.backend = .localDev). Deployed Supabase is
+        # https, so this is a development-only allowance.
+        NSAppTransportSecurity:
+          NSAllowsLocalNetworking: true
         CFBundleURLTypes:
           - CFBundleURLName: canopy.ai
             CFBundleURLSchemes:

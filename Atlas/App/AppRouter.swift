@@ -67,12 +67,6 @@ final class AppRouter {
         go(.analysing(source: source))
     }
 
-    /// LinkedIn connect toggle on the CV step — attaches/detaches the connector
-    /// on the profile so it's there whether or not they also upload a file.
-    func setLinkedIn(_ on: Bool) {
-        on ? profile.connectLinkedIn() : profile.disconnectLinkedIn()
-    }
-
     // Onboarding: analysing → preferences wizard → profile review. (The old
     // roles step is parked — RolePreferences/didChooseRoles kept for later.)
     func parsingSucceeded() { go(.preferences) }

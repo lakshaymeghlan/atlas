@@ -126,10 +126,17 @@ struct GitHubData: Codable, Equatable {
     var totalStars: Int { projects.reduce(0) { $0 + $1.stars } }
 }
 
+/// What a LinkedIn import actually establishes.
+///
+/// LinkedIn exposes no API for experience, connections, or followers — their
+/// OIDC scopes return name, email, and picture only. So this records the real
+/// outcome of reading a profile PDF the person exported, rather than inventing
+/// vanity metrics we have no way to obtain.
 struct LinkedInData: Codable, Equatable {
-    var connections: Int
-    var followers: Int
-    var posts: Int
+    var importedAt: Date
+    /// How much of the profile the import contributed.
+    var roles: Int
+    var skills: Int
 }
 
 /// Everything the app knows about a person. Persisted as JSON in UserDefaults
