@@ -74,7 +74,7 @@ struct JobsView: View {
 
     private var stamps: some View {
         ZStack {
-            stamp("PASS", color: Color.sunDeep, angle: -14)
+            stamp("PASS", color: Color.sun, angle: -14)   // over the dark card
                 .opacity(Double(max(0, -drag.width) / 90))
                 .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topTrailing)
             stamp("ACCEPT", color: Color.canopy600, angle: 14)

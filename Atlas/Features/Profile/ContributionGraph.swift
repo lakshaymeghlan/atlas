@@ -8,9 +8,10 @@ struct ContributionGraph: View {
     private let weeks = 52
     private let days = 7
 
-    // GitHub's green scale, with a warm empty cell so it sits on ivory.
+    // GitHub's own green scale — kept recognisable — with an empty cell tuned to
+    // the app's surface rather than GitHub's.
     private let levelColors = [
-        Color(hex: "EAE7E0"), Color(hex: "9BE9A8"),
+        Color(hex: "E3EAEF"), Color(hex: "9BE9A8"),
         Color(hex: "40C463"), Color(hex: "30A14E"), Color(hex: "216E39"),
     ]
 

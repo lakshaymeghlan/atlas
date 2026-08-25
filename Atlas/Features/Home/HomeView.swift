@@ -99,7 +99,8 @@ struct HomeView: View {
             HStack(spacing: Space.m) {
                 ZStack {
                     Circle().fill(Color.sun.opacity(0.22)).frame(width: 46, height: 46)
-                    Image(systemName: "sparkles").font(.system(size: 20)).foregroundStyle(Color.sunDeep)
+                    // Bright accent, not the deep one: this sits on the navy card.
+                    Image(systemName: "sparkles").font(.system(size: 20)).foregroundStyle(Color.sun)
                 }
                 VStack(alignment: .leading, spacing: 2) {
                     Text(jobs.matches.isEmpty ? "No new roles right now" : "\(jobs.matches.count) roles match you right now")
