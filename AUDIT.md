@@ -9,7 +9,7 @@ _Prototype delivered 2026-07-27. Client-side only, no backend (per direction)._
 A complete, running iOS prototype of the Atlas front door. It **builds clean
 for the iOS Simulator with zero code warnings**, launches, and renders. The
 whole journey works end to end with local stubs standing in for the backend.
-
+ 
 **The journey** (all screens built, wired through a state machine):
 
 | Screen | State | What works |
