@@ -10,7 +10,7 @@ Supabase Edge Functions (Deno). Two are live:
 \* Structuring is deterministic — see [Two structuring paths](#two-structuring-paths). Set
 `ANTHROPIC_API_KEY` to use the model path instead.
 † Optional — raises the rate limit and enables the real `contributionsLastYear` (GraphQL); it's `0` without a token.
-
+ 
 ## Two structuring paths
 
 `parse-cv` turns extracted text into the app's shape one of two ways, and reports which
